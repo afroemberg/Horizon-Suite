@@ -1174,6 +1174,24 @@ local function FinalizeCard(card)
     end)
 end
 
+-- Shows or hides an entire section card based on its visibleWhen predicate, then resizes the tab.
+local function RefreshCardVisibility(card)
+    if not card or not card.visibleWhen then return end
+    local visible = card.visibleWhen()
+    if visible then
+        if not card:IsShown() then
+            card:Show()
+            DoInstantRelayout(card, false)
+        end
+    else
+        if card:IsShown() then
+            card:Hide()
+        end
+    end
+    local tab = card:GetParent()
+    if tab and ResizeTabFrame then ResizeTabFrame(tab) end
+end
+
 --- Build one options category: section cards, toggles, sliders, dropdowns, color matrix, reorder list; wires get/set and refreshers.
 -- @param tab table Tab frame with topAnchor
 -- @param tabIndex number Category index (1-based)
@@ -1184,6 +1202,7 @@ local function BuildCategory(tab, tabIndex, options, refreshers, optionFrames)
     local anchor = tab.topAnchor
     local currentCard = nil
     local currentSection = ""
+    local visibilityCards = {}
     for _, opt in ipairs(options) do
         if opt.type == "section" then
             currentSection = opt.name or ""
@@ -1195,6 +1214,14 @@ local function BuildCategory(tab, tabIndex, options, refreshers, optionFrames)
             end
             currentCard = OptionsWidgets_CreateSectionCard(tab, anchor, sectionKey, GetCardCollapsed, SetCardCollapsed)
             currentCard.widgetList = {}
+            if opt.visibleWhen then
+                currentCard.visibleWhen = opt.visibleWhen
+                currentCard.Refresh = function(self) RefreshCardVisibility(self) end
+                visibilityCards[#visibilityCards + 1] = currentCard
+            end
+            if opt.dbKey and optionFrames then
+                optionFrames[opt.dbKey] = { tabIndex = tabIndex, frame = currentCard }
+            end
             if hasHeader then
                 local lbl = OptionsWidgets_CreateSectionHeader(currentCard, opt.name, sectionKey, GetCardCollapsed, SetCardCollapsed)
                 currentCard.contentAnchor = lbl
@@ -2505,6 +2532,11 @@ local function BuildCategory(tab, tabIndex, options, refreshers, optionFrames)
         end
     end
     if currentCard then FinalizeCard(currentCard) end
+    if #visibilityCards > 0 then
+        C_Timer.After(0, function()
+            for _, c in ipairs(visibilityCards) do RefreshCardVisibility(c) end
+        end)
+    end
 end
 
 -- Build sidebar grouped by moduleKey (Modules, Focus, Presence)
