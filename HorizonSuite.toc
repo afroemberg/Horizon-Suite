@@ -81,6 +81,7 @@ modules/Presence/PresenceEvents.lua
 modules/Presence/PresenceErrors.lua
 modules/Presence/PresenceSlash.lua
 modules/Presence/PresenceModule.lua
+modules/Presence/PresenceTalkingHead.lua
 
 modules/Cache/CacheState.lua
 modules/Cache/CacheParsing.lua
@@ -107,6 +108,7 @@ modules/Essence/EssenceSlash.lua
 modules/Essence/EssenceModule.lua
 options/OptionsWidgets.lua
 options/OptionsData.lua
+options/modules/OptionsPresenceTalkingHead.lua
 options/OptionsPanel.lua
 options/SettingsBridge.lua
 options/dashboard/DashboardConstants.lua

@@ -1644,6 +1644,7 @@ local CARD_EXPAND_ANIM_DUR = 0.22
 -- When sectionKey and getCollapsedFn/setCollapsedFn are provided, the card is collapsible.
 function _G.OptionsWidgets_CreateSectionCard(parent, anchor, sectionKey, getCollapsedFn, setCollapsedFn)
     local card = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    card.prevAnchor = anchor
     card:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -Def.SectionGap)
     card:SetPoint("TOPRIGHT", parent, "TOPRIGHT", 0, 0)
     card:SetBackdrop(SECTION_CARD_BACKDROP)
