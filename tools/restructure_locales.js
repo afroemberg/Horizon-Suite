@@ -26,6 +26,11 @@ const enUSPath = path.join(LOC, 'enUS.lua');
 
 const LOCALES = ['deDE', 'frFR', 'koKR', 'ptBR', 'esES', 'zhCN'];
 
+/** Normalize decoded locale text for comparison with enUS (legacy marker inside strings). */
+function localeCompareString(s) {
+    return s.replace(/\s*-- NEEDS TRANSLATION/g, '');
+}
+
 function readStandardFont(localePath) {
     if (!fs.existsSync(localePath)) return 'UNIT_NAME_FONT';
     const head = fs.readFileSync(localePath, 'utf8').split(/\r?\n/).slice(0, 15).join('\n');

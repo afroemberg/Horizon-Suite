@@ -23,7 +23,7 @@ addon.StandardFont = UNIT_NAME_FONT
 -- L["NAME_DISCORD"]                                          = "Discord"
 -- L["NAME_KO_FI"]                                            = "Ko-fi"
 -- L["NAME_PATREON"]                                          = "Patreon"
--- L["NAME_GITHUB"]                                              = "GitHub"
+-- L["NAME_GITHUB"]                                           = "GitHub"
 -- L["NAME_CURSEFORGE"]                                       = "CurseForge"
 -- L["NAME_WAGO"]                                             = "Wago"
 -- L["NAME_TOMTOM"]                                           = "TomTom"
@@ -201,7 +201,17 @@ L["DASH_WELCOME_CONTRIBUTORS_BODY"]                           = [=[Thanks to eve
 -- L["DASH_WELCOME_SUPPORTERS_HEADING"]                       = "Supporters"
 -- L["DASH_WELCOME_SUPPORTERS_BODY"]                          = [=[Thank you to everyone who supports Horizon Suite through Ko-fi, Patreon, and other channels.]=]
 -- L["DASH_WELCOME_LOCALISATIONS_HEADING"]                    = "Localisations"
--- L["DASH_WELCOME_LOCALISATIONS_BODY"] = ... (falls back to enUS until retranslated against new path layout)
+-- L["DASH_WELCOME_LOCALISATIONS_BODY"]                       = [=[The addon UI is localised for:
+-- 
+-- • German (deDE) — `localisation/horizon/deDE.lua`
+-- • English (enUS) — `localisation/horizon/enUS.lua`
+-- • Spanish (esES) — `localisation/horizon/esES.lua`
+-- • French (frFR) — `localisation/horizon/frFR.lua`
+-- • Korean (koKR) — `localisation/horizon/koKR.lua`
+-- • Brazilian Portuguese (ptBR) — `localisation/horizon/ptBR.lua`
+-- • Chinese (zhCN) — `localisation/horizon/zhCN.lua`
+-- 
+-- See contributions/translate.md in the repo for how to contribute. Additional locales are welcome via Discord.]=]
 
 
 -- =====================================================================
@@ -315,6 +325,9 @@ L["FOCUS_CONTENT_TYPES"]                                      = "콘텐츠 유�
 L["FOCUS_DELVES"]                                             = "구렁"
 L["FOCUS_DELVES_DUNGEONS"]                                    = "구렁 & 던전"
 L["FOCUS_DELVE_COMPLETE"]                                     = "구렁 완료"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS"]                      = "Ritual Site Title Counters"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_DESC"]                 = "Show Ritual Site spoils and deaths beside the scenario title."
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_TOOLTIP"]              = "Uses the same title-row counter style as Delves when the scenario provides header currency icons."
 L["FOCUS_INTERACTIONS"]                                       = "상호작용"
 -- L["FOCUS_LAYOUT_TAB_DESC"]                                 = "Configure and customise settings related to layout."
 -- L["FOCUS_APPEARANCE_TAB_DESC"]                             = "Tracker panel look, fading, and list layout (header, sections, entries, timers, emphasis)."
@@ -404,7 +417,7 @@ L["INSIGHT_SCALE"]                                            = "툴팁"
 L["AXIS_SCALE_INSIGHT_TOOLTIP_MODULE"]                        = "툴팁 크기 조정 (50–200%)."
 L["CACHE_SCALE"]                                              = "획득 알림"
 L["AXIS_SCALE_CACHE_LOOT_TOAST_MODULE"]                       = "획득 알림 기능의 크기 조정 (50–200%)."
--- L["CACHE_FONT"]                                            = "Loot toast font"
+-- L["CACHE_FONT"]                                               = "Loot toast font"
 -- L["CACHE_FONT_FAMILY"]                                     = "Font family used for loot toast text. Use 'Use global font' to follow the addon-wide font."
 L["AXIS_ENABLE_HORIZON_INSIGHT_MODULE"]                       = "툴팁 기능 활성화"
 L["AXIS_CINEMATIC_TOOLTIPS_CLASS_COLOURS_SPEC_DISPLAY"]       = "직업 색상, 전문화 표시, 진영 아이콘이 있는 시네마틱 툴팁."
@@ -1236,6 +1249,9 @@ L["PRESENCE_SMALL_SECONDARY_SIZE"]                            = "Small secondary
 -- =====================================================================
 L["FOCUS_OUTLINE_NONE"]                                       = "없음"
 L["FOCUS_THICK_OUTLINE"]                                      = "두꺼운 외곽선"
+-- L["FOCUS_SLUG"]                                            = "SLUG"
+-- L["FOCUS_SLUG_OUTLINE"]                                    = "SLUG Outline"
+-- L["FOCUS_SLUG_THICK_OUTLINE"]                              = "SLUG Thick Outline"
 
 -- =====================================================================
 -- OptionsData.lua Dropdown options — Highlight style
@@ -1558,7 +1574,7 @@ L["VISTA_SIZE_OF_COLLECTED_ADDON_MINIMAP_BUTTONS"]            = "수집된 애�
 -- =====================================================================
 -- OptionsData.lua Vista — Minimap Addon Buttons
 -- =====================================================================
-L["VISTA_COLLECT_HORIZON_MINIMAP"]                            = "Include Horizon minimap icon"
+-- L["VISTA_COLLECT_HORIZON_MINIMAP"]                            = "Include Horizon minimap icon"
 -- L["VISTA_COLLECT_HORIZON_MINIMAP_DESC"]                    = "Put Horizon's own minimap icon in the managed addon bar, right-click panel, or drawer instead of leaving it on the minimap edge."
 -- L["VISTA_SORT_BUTTONS_ALPHA"]                              = "Sort Buttons Alphabetically"
 -- L["VISTA_SORT_BUTTONS_ALPHA_DESC"]                         = "Sort collected addon minimap buttons alphabetically by name."
@@ -1569,17 +1585,17 @@ L["VISTA_MANAGE_ADDON_MINIMAP_BUTTONS"]                       = "애드온 미�
 L["VISTA_TAKES_CONTROL_OF_ADDON_MINIMAP"]                     = "활성화 시 Vista가 애드온 미니맵 버튼을 제어하고 선택한 모드로 그룹화합니다."
 L["VISTA_BUTTON_MODE"]                                        = "버튼 모드"
 L["VISTA_ADDON_BUTTONS_PRESENTED_HOVER_BAR_BELOW"]            = "애드온 버튼 표시 방식: 미니맵 아래 호버 바, 우클릭 패널, 또는 플로팅 서랍 버튼."
-L["VISTA_ALWAYS_BAR"]                                         = "Always show bar"
+-- L["VISTA_ALWAYS_BAR"]                                         = "Always show bar"
 -- L["VISTA_ALWAYS_MOUSEOVER_BAR_POSITIONING"]                = "Always show mouseover bar (for positioning)"
 -- L["VISTA_KEEP_MOUSEOVER_BAR_VISIBLE_TIMES_YOU"]            = "Keep the mouseover bar visible at all times so you can reposition it. Disable when done."
 -- L["VISTA_DISABLE_DONE"]                                    = "Disable when done."
 L["VISTA_MOUSEOVER_BAR"]                                      = "마우스오버 바"
 L["VISTA_RIGHT_CLICK_PANEL"]                                  = "우클릭 패널"
 L["VISTA_FLOATING_DRAWER"]                                    = "플로팅 서랍"
--- L["VISTA_DRAWER_BUTTON_ICON"]                              = "Drawer button icon"
-L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
+-- L["VISTA_DRAWER_BUTTON_ICON"]                                 = "Drawer button icon"
+-- L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
 -- L["VISTA_CHOOSE_ICON"]                                     = "Choose icon"
-L["VISTA_CHOOSE_DRAWER_ICON"]                                 = "Choose Drawer Icon"
+-- L["VISTA_CHOOSE_DRAWER_ICON"]                              = "Choose Drawer Icon"
 L["VISTA_LOCK_DRAWER_BUTTON_POSITION"]                        = "서랍 버튼 위치 잠금"
 L["VISTA_PREVENT_DRAGGING_FLOATING_DRAWER_BUTTON"]            = "플로팅 서랍 버튼을 드래그할 수 없게 합니다."
 L["VISTA_LOCK_MOUSEOVER_BAR_POSITION"]                        = "마우스오버 바 위치 잠금"

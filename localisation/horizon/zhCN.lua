@@ -23,7 +23,7 @@ addon.StandardFont = UNIT_NAME_FONT
 -- L["NAME_DISCORD"]                                          = "Discord"
 -- L["NAME_KO_FI"]                                            = "Ko-fi"
 -- L["NAME_PATREON"]                                          = "Patreon"
--- L["NAME_GITHUB"]                                              = "GitHub"
+-- L["NAME_GITHUB"]                                           = "GitHub"
 -- L["NAME_CURSEFORGE"]                                       = "CurseForge"
 -- L["NAME_WAGO"]                                             = "Wago"
 -- L["NAME_TOMTOM"]                                           = "TomTom"
@@ -202,7 +202,17 @@ L["DASH_WELCOME_CONTRIBUTORS_BODY"]                           = [=[Thanks to eve
 -- L["DASH_WELCOME_SUPPORTERS_HEADING"]                       = "Supporters"
 -- L["DASH_WELCOME_SUPPORTERS_BODY"]                          = [=[Thank you to everyone who supports Horizon Suite through Ko-fi, Patreon, and other channels.]=]
 -- L["DASH_WELCOME_LOCALISATIONS_HEADING"]                    = "Localisations"
--- L["DASH_WELCOME_LOCALISATIONS_BODY"] = ... (falls back to enUS until retranslated against new path layout)
+-- L["DASH_WELCOME_LOCALISATIONS_BODY"]                       = [=[The addon UI is localised for:
+-- 
+-- • German (deDE) — `localisation/horizon/deDE.lua`
+-- • English (enUS) — `localisation/horizon/enUS.lua`
+-- • Spanish (esES) — `localisation/horizon/esES.lua`
+-- • French (frFR) — `localisation/horizon/frFR.lua`
+-- • Korean (koKR) — `localisation/horizon/koKR.lua`
+-- • Brazilian Portuguese (ptBR) — `localisation/horizon/ptBR.lua`
+-- • Chinese (zhCN) — `localisation/horizon/zhCN.lua`
+-- 
+-- See contributions/translate.md in the repo for how to contribute. Additional locales are welcome via Discord.]=]
 
 
 -- =====================================================================
@@ -316,6 +326,9 @@ L["FOCUS_CONTENT_TYPES"]                                      = "内容类型"
 L["FOCUS_DELVES"]                                             = "地下堡"
 L["FOCUS_DELVES_DUNGEONS"]                                    = "地下堡与地下城"
 L["FOCUS_DELVE_COMPLETE"]                                     = "地下堡完成"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS"]                      = "Ritual Site Title Counters"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_DESC"]                 = "Show Ritual Site spoils and deaths beside the scenario title."
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_TOOLTIP"]              = "Uses the same title-row counter style as Delves when the scenario provides header currency icons."
 L["FOCUS_INTERACTIONS"]                                       = "交互"
 -- L["FOCUS_LAYOUT_TAB_DESC"]                                 = "Configure and customise settings related to layout."
 -- L["FOCUS_APPEARANCE_TAB_DESC"]                             = "Tracker panel look, fading, and list layout (header, sections, entries, timers, emphasis)."
@@ -405,7 +418,7 @@ L["INSIGHT_SCALE"]                                            = "洞察缩放"
 L["AXIS_SCALE_INSIGHT_TOOLTIP_MODULE"]                        = "洞察提示模块缩放(50-200%)"
 L["CACHE_SCALE"]                                              = "Cache缩放"
 L["AXIS_SCALE_CACHE_LOOT_TOAST_MODULE"]                       = "Cache战利品提示模块缩放(50-200%)"
--- L["CACHE_FONT"]                                            = "Loot toast font"
+L["CACHE_FONT"]                                               = "Loot toast font"
 -- L["CACHE_FONT_FAMILY"]                                     = "Font family used for loot toast text. Use 'Use global font' to follow the addon-wide font."
 L["AXIS_ENABLE_HORIZON_INSIGHT_MODULE"]                       = "启用Horizon洞察模块"
 L["AXIS_CINEMATIC_TOOLTIPS_CLASS_COLOURS_SPEC_DISPLAY"]       = "电影级提示框, 带有职业颜色, 专精显示和阵营图标."
@@ -1237,6 +1250,9 @@ L["PRESENCE_SMALL_SECONDARY_SIZE"]                            = "Small secondary
 -- =====================================================================
 L["FOCUS_OUTLINE_NONE"]                                       = "无"
 L["FOCUS_THICK_OUTLINE"]                                      = "粗轮廓"
+-- L["FOCUS_SLUG"]                                            = "SLUG"
+-- L["FOCUS_SLUG_OUTLINE"]                                    = "SLUG Outline"
+-- L["FOCUS_SLUG_THICK_OUTLINE"]                              = "SLUG Thick Outline"
 
 -- =====================================================================
 -- OptionsData.lua Dropdown options — Highlight style
@@ -1577,10 +1593,10 @@ L["VISTA_DISABLE_DONE"]                                       = "完成后禁用
 L["VISTA_MOUSEOVER_BAR"]                                      = "鼠标悬停条"
 L["VISTA_RIGHT_CLICK_PANEL"]                                  = "右键面板"
 L["VISTA_FLOATING_DRAWER"]                                    = "浮动抽屉"
--- L["VISTA_DRAWER_BUTTON_ICON"]                              = "Drawer button icon"
+L["VISTA_DRAWER_BUTTON_ICON"]                                 = "Drawer button icon"
 L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
 -- L["VISTA_CHOOSE_ICON"]                                     = "Choose icon"
-L["VISTA_CHOOSE_DRAWER_ICON"]                                 = "Choose Drawer Icon"
+-- L["VISTA_CHOOSE_DRAWER_ICON"]                              = "Choose Drawer Icon"
 L["VISTA_LOCK_DRAWER_BUTTON_POSITION"]                        = "锁定抽屉按钮位置"
 L["VISTA_PREVENT_DRAGGING_FLOATING_DRAWER_BUTTON"]            = "防止拖动浮动抽屉按钮"
 L["VISTA_LOCK_MOUSEOVER_BAR_POSITION"]                        = "锁定鼠标悬停条位置"

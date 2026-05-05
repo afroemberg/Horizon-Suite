@@ -23,7 +23,7 @@ addon.StandardFont = UNIT_NAME_FONT
 -- L["NAME_DISCORD"]                                          = "Discord"
 -- L["NAME_KO_FI"]                                            = "Ko-fi"
 -- L["NAME_PATREON"]                                          = "Patreon"
--- L["NAME_GITHUB"]                                              = "GitHub"
+-- L["NAME_GITHUB"]                                           = "GitHub"
 -- L["NAME_CURSEFORGE"]                                       = "CurseForge"
 -- L["NAME_WAGO"]                                             = "Wago"
 -- L["NAME_TOMTOM"]                                           = "TomTom"
@@ -203,7 +203,17 @@ L["DASH_WELCOME_CONTRIBUTORS_BODY"]                           = [=[Danke an alle
 L["DASH_WELCOME_SUPPORTERS_HEADING"]                          = "Unterstützer"
 L["DASH_WELCOME_SUPPORTERS_BODY"]                             = [=[Vielen Dank an alle, die Horizon Suite über Ko-fi, Patreon und andere Wege unterstützen.]=]
 L["DASH_WELCOME_LOCALISATIONS_HEADING"]                       = "Lokalisierungen"
--- L["DASH_WELCOME_LOCALISATIONS_BODY"] = ... (falls back to enUS until retranslated against new path layout)
+-- L["DASH_WELCOME_LOCALISATIONS_BODY"]                       = [=[The addon UI is localised for:
+-- 
+-- • German (deDE) — `localisation/horizon/deDE.lua`
+-- • English (enUS) — `localisation/horizon/enUS.lua`
+-- • Spanish (esES) — `localisation/horizon/esES.lua`
+-- • French (frFR) — `localisation/horizon/frFR.lua`
+-- • Korean (koKR) — `localisation/horizon/koKR.lua`
+-- • Brazilian Portuguese (ptBR) — `localisation/horizon/ptBR.lua`
+-- • Chinese (zhCN) — `localisation/horizon/zhCN.lua`
+-- 
+-- See contributions/translate.md in the repo for how to contribute. Additional locales are welcome via Discord.]=]
 
 
 -- =====================================================================
@@ -317,6 +327,9 @@ L["FOCUS_CONTENT_TYPES"]                                      = "Inhaltstypen"
 L["FOCUS_DELVES"]                                             = "Tiefen"
 L["FOCUS_DELVES_DUNGEONS"]                                    = "Tiefen & Verliese"
 L["FOCUS_DELVE_COMPLETE"]                                     = "Tiefe abgeschlossen"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS"]                      = "Ritual Site Title Counters"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_DESC"]                 = "Show Ritual Site spoils and deaths beside the scenario title."
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_TOOLTIP"]              = "Uses the same title-row counter style as Delves when the scenario provides header currency icons."
 L["FOCUS_INTERACTIONS"]                                       = "Interaktionen"
 -- L["FOCUS_LAYOUT_TAB_DESC"]                                 = "Configure and customise settings related to layout."
 L["FOCUS_APPEARANCE_TAB_DESC"]                                = "Darstellung, Abblendung und Listen-Layout (Kopfbereich, Abschnitte, Einträge, Timer, Hervorhebung) des Zielverfolgers."
@@ -406,7 +419,7 @@ L["INSIGHT_SCALE"]                                            = "Insight-Skalier
 L["AXIS_SCALE_INSIGHT_TOOLTIP_MODULE"]                        = "Skalierung für das Insight-Tooltip-Modul (50–200 %)"
 L["CACHE_SCALE"]                                              = "Cache-Skalierung"
 L["AXIS_SCALE_CACHE_LOOT_TOAST_MODULE"]                       = "Skalierung des Cache-Beutebenachrichtungsmoduls (50–200 %)."
--- L["CACHE_FONT"]                                            = "Loot toast font"
+-- L["CACHE_FONT"]                                               = "Loot toast font"
 -- L["CACHE_FONT_FAMILY"]                                     = "Font family used for loot toast text. Use 'Use global font' to follow the addon-wide font."
 L["AXIS_ENABLE_HORIZON_INSIGHT_MODULE"]                       = "Horizon-Insight-Modul aktivieren"
 L["AXIS_CINEMATIC_TOOLTIPS_CLASS_COLOURS_SPEC_DISPLAY"]       = "Filmische Tooltips mit Klassenfarben, Spezialisierungsanzeige und Fraktionssymbolen."
@@ -1238,6 +1251,9 @@ L["PRESENCE_FONT_SIZE_SMALL_NOTIFICATION_SUBTITLES"]          = "Schriftgröße 
 -- =====================================================================
 L["FOCUS_OUTLINE_NONE"]                                       = "Keine"
 L["FOCUS_THICK_OUTLINE"]                                      = "Starke Kontur"
+-- L["FOCUS_SLUG"]                                            = "SLUG"
+-- L["FOCUS_SLUG_OUTLINE"]                                    = "SLUG Outline"
+-- L["FOCUS_SLUG_THICK_OUTLINE"]                              = "SLUG Thick Outline"
 
 -- =====================================================================
 -- OptionsData.lua Dropdown options — Highlight style
@@ -1578,10 +1594,10 @@ L["VISTA_DISABLE_DONE"]                                       = "Deaktivieren we
 L["VISTA_MOUSEOVER_BAR"]                                      = "Mausüber-Leiste"
 L["VISTA_RIGHT_CLICK_PANEL"]                                  = "Rechtsklick-Anzeige"
 L["VISTA_FLOATING_DRAWER"]                                    = "Schwebende Schublade"
--- L["VISTA_DRAWER_BUTTON_ICON"]                              = "Drawer button icon"
-L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
+-- L["VISTA_DRAWER_BUTTON_ICON"]                                 = "Drawer button icon"
+-- L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
 -- L["VISTA_CHOOSE_ICON"]                                     = "Choose icon"
-L["VISTA_CHOOSE_DRAWER_ICON"]                                 = "Choose Drawer Icon"
+-- L["VISTA_CHOOSE_DRAWER_ICON"]                              = "Choose Drawer Icon"
 L["VISTA_LOCK_DRAWER_BUTTON_POSITION"]                        = "Position der Schubladenschaltfläche fixieren"
 L["VISTA_PREVENT_DRAGGING_FLOATING_DRAWER_BUTTON"]            = "Schubladenschaltfläche nicht verschiebbar."
 L["VISTA_LOCK_MOUSEOVER_BAR_POSITION"]                        = "Position der Mausüber-Leiste fixieren"

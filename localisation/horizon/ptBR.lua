@@ -23,7 +23,7 @@ addon.StandardFont = UNIT_NAME_FONT
 -- L["NAME_DISCORD"]                                          = "Discord"
 -- L["NAME_KO_FI"]                                            = "Ko-fi"
 -- L["NAME_PATREON"]                                          = "Patreon"
--- L["NAME_GITHUB"]                                              = "GitHub"
+-- L["NAME_GITHUB"]                                           = "GitHub"
 -- L["NAME_CURSEFORGE"]                                       = "CurseForge"
 -- L["NAME_WAGO"]                                             = "Wago"
 -- L["NAME_TOMTOM"]                                           = "TomTom"
@@ -201,7 +201,17 @@ L["DASH_WELCOME_CONTRIBUTORS_BODY"]                           = [=[Thanks to eve
 -- L["DASH_WELCOME_SUPPORTERS_HEADING"]                       = "Supporters"
 -- L["DASH_WELCOME_SUPPORTERS_BODY"]                          = [=[Thank you to everyone who supports Horizon Suite through Ko-fi, Patreon, and other channels.]=]
 -- L["DASH_WELCOME_LOCALISATIONS_HEADING"]                    = "Localisations"
--- L["DASH_WELCOME_LOCALISATIONS_BODY"] = ... (falls back to enUS until retranslated against new path layout)
+-- L["DASH_WELCOME_LOCALISATIONS_BODY"]                       = [=[The addon UI is localised for:
+-- 
+-- • German (deDE) — `localisation/horizon/deDE.lua`
+-- • English (enUS) — `localisation/horizon/enUS.lua`
+-- • Spanish (esES) — `localisation/horizon/esES.lua`
+-- • French (frFR) — `localisation/horizon/frFR.lua`
+-- • Korean (koKR) — `localisation/horizon/koKR.lua`
+-- • Brazilian Portuguese (ptBR) — `localisation/horizon/ptBR.lua`
+-- • Chinese (zhCN) — `localisation/horizon/zhCN.lua`
+-- 
+-- See contributions/translate.md in the repo for how to contribute. Additional locales are welcome via Discord.]=]
 
 
 -- =====================================================================
@@ -315,6 +325,9 @@ L["FOCUS_CONTENT_TYPES"]                                      = "Tipos de Conte�
 -- L["FOCUS_DELVES"]                                          = "Delves"
 L["FOCUS_DELVES_DUNGEONS"]                                    = "Delves e Masmorras"
 L["FOCUS_DELVE_COMPLETE"]                                     = "Delve concluído"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS"]                      = "Ritual Site Title Counters"
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_DESC"]                 = "Show Ritual Site spoils and deaths beside the scenario title."
+-- L["FOCUS_RITUAL_SITE_TITLE_COUNTERS_TOOLTIP"]              = "Uses the same title-row counter style as Delves when the scenario provides header currency icons."
 L["FOCUS_INTERACTIONS"]                                       = "Interações"
 -- L["FOCUS_LAYOUT_TAB_DESC"]                                 = "Configure and customise settings related to layout."
 -- L["FOCUS_APPEARANCE_TAB_DESC"]                             = "Tracker panel look, fading, and list layout (header, sections, entries, timers, emphasis)."
@@ -404,7 +417,7 @@ L["INSIGHT_SCALE"]                                            = "Escala do Insig
 L["AXIS_SCALE_INSIGHT_TOOLTIP_MODULE"]                        = "Escala do módulo de tooltip Insight (50–200%)."
 L["CACHE_SCALE"]                                              = "Escala do Cache"
 L["AXIS_SCALE_CACHE_LOOT_TOAST_MODULE"]                       = "Escala do módulo de notificação de saque Cache (50–200%)."
--- L["CACHE_FONT"]                                            = "Loot toast font"
+-- L["CACHE_FONT"]                                               = "Loot toast font"
 -- L["CACHE_FONT_FAMILY"]                                     = "Font family used for loot toast text. Use 'Use global font' to follow the addon-wide font."
 L["AXIS_ENABLE_HORIZON_INSIGHT_MODULE"]                       = "Ativar Módulo Horizon Insight"
 L["AXIS_CINEMATIC_TOOLTIPS_CLASS_COLOURS_SPEC_DISPLAY"]       = "Tooltips cinematográficos com cores de classe, exibição de especialização e ícones de facção."
@@ -1236,6 +1249,9 @@ L["PRESENCE_SMALL_SECONDARY_SIZE"]                            = "Small secondary
 -- =====================================================================
 L["FOCUS_OUTLINE_NONE"]                                       = "Nenhum"
 L["FOCUS_THICK_OUTLINE"]                                      = "Contorno espesso"
+-- L["FOCUS_SLUG"]                                            = "SLUG"
+-- L["FOCUS_SLUG_OUTLINE"]                                    = "SLUG Outline"
+-- L["FOCUS_SLUG_THICK_OUTLINE"]                              = "SLUG Thick Outline"
 
 -- =====================================================================
 -- OptionsData.lua Dropdown options — Highlight style
@@ -1576,10 +1592,10 @@ L["VISTA_KEEP_MOUSEOVER_BAR_VISIBLE_TIMES_YOU"]               = "Mantém a barra
 L["VISTA_MOUSEOVER_BAR"]                                      = "Barra ao passar o mouse"
 L["VISTA_RIGHT_CLICK_PANEL"]                                  = "Painel com botão direito"
 L["VISTA_FLOATING_DRAWER"]                                    = "Gaveta flutuante"
--- L["VISTA_DRAWER_BUTTON_ICON"]                              = "Drawer button icon"
+L["VISTA_DRAWER_BUTTON_ICON"]                                 = "Drawer button icon"
 L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
 -- L["VISTA_CHOOSE_ICON"]                                     = "Choose icon"
-L["VISTA_CHOOSE_DRAWER_ICON"]                                 = "Choose Drawer Icon"
+-- L["VISTA_CHOOSE_DRAWER_ICON"]                              = "Choose Drawer Icon"
 L["VISTA_LOCK_DRAWER_BUTTON_POSITION"]                        = "Bloquear posição do botão gaveta"
 L["VISTA_PREVENT_DRAGGING_FLOATING_DRAWER_BUTTON"]            = "Impede arrastar o botão da gaveta flutuante."
 L["VISTA_LOCK_MOUSEOVER_BAR_POSITION"]                        = "Bloquear posição da barra ao passar o mouse"
