@@ -142,8 +142,6 @@ function generateTemplate(entries, maxLhsLen) {
     return lines.join('\n') + '\n';
 }
 
-console.log('Normalizing localisation/horizon/enUS.lua...');
-rewriteEnUSNormalized(enUSPath);
 console.log('Parsing localisation/horizon/enUS.lua...');
 const { entries, keys } = parseEnUS(enUSPath);
 const maxLhsLen = computeMaxLhsLen(entries);
