@@ -6,7 +6,6 @@
  * Untranslated keys become commented-out assignments (leading `--` only; runtime falls back to enUS).
  * Assignments whose string equals enUS are treated as untranslated (comment only) so
  * locales fall back via __index to enUS — no duplicate English to maintain.
- * Regenerates localisation/horizon/locale_template.lua for new translators.
  *
  * Usage: node tools/restructure_locales.js
  */
