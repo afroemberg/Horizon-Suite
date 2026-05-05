@@ -15,7 +15,6 @@ const path = require('path');
 const {
     parseEnUS,
     parseLocaleTranslations,
-    rewriteEnUSNormalized,
     computeMaxLhsLen,
     formatLocaleAssignment,
 } = require('./lib/parseLocalisationEnUS.js');
