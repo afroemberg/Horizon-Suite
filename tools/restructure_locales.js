@@ -142,7 +142,7 @@ function generateTemplate(entries, maxLhsLen) {
     return lines.join('\n') + '\n';
 }
 
-console.log('Normalizing localisation/horizon/enUS.lua (section headers only; no per-key Context)...');
+console.log('Normalizing localisation/horizon/enUS.lua...');
 rewriteEnUSNormalized(enUSPath);
 console.log('Parsing localisation/horizon/enUS.lua...');
 const { entries, keys } = parseEnUS(enUSPath);
