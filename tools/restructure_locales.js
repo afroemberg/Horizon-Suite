@@ -157,8 +157,3 @@ for (const locale of LOCALES) {
     fs.writeFileSync(filePath, out, 'utf8');
     console.log(`  Written ${filePath}`);
 }
-
-const templatePath = path.join(LOC, 'locale_template.lua');
-fs.writeFileSync(templatePath, generateTemplate(entries, maxLhsLen), 'utf8');
-console.log(`  Written ${templatePath}`);
-console.log('Done.');
