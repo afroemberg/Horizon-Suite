@@ -81,14 +81,16 @@ end
 local function HookTooltipOnShow(tooltip)
     tooltip:HookScript("OnShow", function(self)
         if not Insight.IsInsightEnabled() then return end
+        if Insight.IsWidgetTooltip(self) then return end
+        local state = Insight.PeekTipState(self)
         -- Suppress when ProcessUnitTooltip is driving Show(); it will call StyleTooltipFull itself.
-        if self._insightSuppressOnShowStyle then return end
+        if state and state.suppressOnShowStyle then return end
         if addon.GetDB("insightHideTooltipsInCombat", false) and InCombatLockdown() then
             self:Hide()
             return
         end
         -- Rapid re-show (AH browsing): skip backdrop reset to avoid flash; TDP post-call applies correct styling.
-        if self._insightLastHideTime and (GetTime() - self._insightLastHideTime) < 0.15 then
+        if state and state.lastHideTime and (GetTime() - state.lastHideTime) < 0.15 then
             Insight.StripNineSlice(self)
             return
         end
@@ -102,10 +104,12 @@ local function HookTooltipShowMethod(tooltip)
     hookedShow[tooltip] = true
     hooksecurefunc(tooltip, "Show", function(self)
         if not Insight.IsInsightEnabled() then return end
+        if Insight.IsWidgetTooltip(self) then return end
+        local state = Insight.PeekTipState(self)
         -- Suppress when ProcessUnitTooltip is driving Show(); StyleTooltipFull handles fonts after Show().
-        if self._insightSuppressOnShowStyle then return end
-        if not self._insightUnitTooltip and not self._insightItemMetadata then
-            self._insightTooltipType = "other"
+        if state and state.suppressOnShowStyle then return end
+        if not (state and (state.unitTooltip or state.itemMetadata)) then
+            Insight.GetTipState(self).tooltipType = "other"
         end
         Insight.StyleFonts(self)
     end)
@@ -118,7 +122,9 @@ end
 -- Branch only on hook-maintained literals. IsShown/IsMouseOver returns can be secret booleans on Midnight:
 -- do not truth-test or compare them — even `v == true` errors. Use OnShow/OnHide and OnEnter/OnLeave + EnableMouse.
 local function TooltipPlainShown(tt)
-    return tt and tt._insightPlainShown == true
+    if not tt then return false end
+    local s = Insight.PeekTipState(tt)
+    return s ~= nil and s.plainShown == true
 end
 
 -- UnitDocumentation: UnitExists uses SecretArguments AllowedWhenUntainted; from tainted addon code the
@@ -142,10 +148,12 @@ end
 
 local function HookGameTooltipLifecycle()
     GameTooltip:HookScript("OnShow", function(self)
-        self._insightPlainShown = true
+        if Insight.IsWidgetTooltip(self) then return end
+        local state = Insight.GetTipState(self)
+        state.plainShown = true
         -- Reset per-show so re-hover of same unit always reprocesses.
-        self._insightUnitTooltipInstance = nil
-        self._insightStyled = nil
+        state.unitTooltipInstance = nil
+        state.styled = nil
         if not Insight.IsInsightEnabled() then return end
         if addon.GetDB("insightHideTooltipsInCombat", false) and InCombatLockdown() then
             self:Hide()
@@ -164,31 +172,39 @@ local function HookGameTooltipLifecycle()
         end
     end)
     GameTooltip:HookScript("OnHide", function(self)
-        self._insightPlainShown = false
-        self._insightUnitTooltipInstance = nil
-        self._insightItemQuality = nil
-        self._insightUnitTooltip = nil
-        self._insightTooltipType = nil
-        self._insightStyled = nil
-        if self._insightLineTags then wipe(self._insightLineTags) end
-        self._insightLastHideTime = GetTime()
+        if Insight.IsWidgetTooltip(self) then return end
+        local state = Insight.PeekTipState(self)
+        if not state then return end
+        state.plainShown = false
+        state.unitTooltipInstance = nil
+        state.itemQuality = nil
+        state.unitTooltip = nil
+        state.tooltipType = nil
+        state.styled = nil
+        if state.lineTags then wipe(state.lineTags) end
+        state.lastHideTime = GetTime()
     end)
     -- Reset instance token on every SetUnit so Blizzard periodic refreshes
     -- (nameplates, target frames) always re-process our custom lines even if
-    -- they reuse the same dataInstanceID. _insightStyled is NOT cleared here —
+    -- they reuse the same dataInstanceID. styled is NOT cleared here —
     -- backdrop/font styling persists and doesn't need reapplying per refresh.
     hooksecurefunc(GameTooltip, "SetUnit", function(self)
-        self._insightUnitTooltipInstance = nil
+        if Insight.IsWidgetTooltip(self) then return end
+        local state = Insight.PeekTipState(self)
+        if state then state.unitTooltipInstance = nil end
     end)
 end
 
 local function HookTooltipLifecycle(tt)
     if not tt then return end
     tt:HookScript("OnShow", function(self)
-        self._insightPlainShown = true
+        if Insight.IsWidgetTooltip(self) then return end
+        Insight.GetTipState(self).plainShown = true
     end)
     tt:HookScript("OnHide", function(self)
-        self._insightPlainShown = false
+        if Insight.IsWidgetTooltip(self) then return end
+        local state = Insight.PeekTipState(self)
+        if state then state.plainShown = false end
     end)
 end
 
@@ -296,10 +312,11 @@ local function ProcessUnitTooltip(tooltip)
 
     -- If Blizzard already showed the tooltip, a second Show() re-runs OnShow (backdrop) and flashes.
     local alreadyVisible = TooltipPlainShown(tooltip)
+    local state = Insight.GetTipState(tooltip)
 
-    tooltip._insightItemMetadata = nil
-    tooltip._insightUnitTooltip  = true
-    if tooltip._insightLineTags then wipe(tooltip._insightLineTags) end
+    state.itemMetadata = nil
+    state.unitTooltip = true
+    if state.lineTags then wipe(state.lineTags) end
     -- Never compare UnitIsPlayer return; assign plain literals inside pcall only.
     local isPlayer = false
     pcall(function()
@@ -309,7 +326,7 @@ local function ProcessUnitTooltip(tooltip)
             isPlayer = false
         end
     end)
-    tooltip._insightTooltipType = isPlayer and "player" or "npc"
+    state.tooltipType = isPlayer and "player" or "npc"
 
     StripHealthAndPowerText(tooltip)
 
@@ -323,16 +340,16 @@ local function ProcessUnitTooltip(tooltip)
     if processed then
         if not alreadyVisible then
             -- Suppress OnShow/Show hooks so StyleTooltipFull below is the single authoritative styling pass.
-            tooltip._insightSuppressOnShowStyle = true
+            state.suppressOnShowStyle = true
             tooltip:Show()
-            tooltip._insightSuppressOnShowStyle = nil
+            state.suppressOnShowStyle = nil
         end
         -- Strip after Show (Show() can repopulate Blizzard health/power text).
         StripHealthAndPowerText(tooltip)
         -- Apply cinematic chrome once per tooltip lifetime; cleared on OnHide for the next hover.
-        if not tooltip._insightStyled then
+        if not state.styled then
             Insight.StyleTooltipFull(tooltip)
-            tooltip._insightStyled = true
+            state.styled = true
         end
         pcall(ReapplyUnitTooltipBorder, tooltip, unit, isPlayer)
     end
@@ -378,16 +395,17 @@ local function OnItemTooltip(tooltip, data)
     local trackQuality = Insight.DetectUpgradeTrackQuality(tooltip)
     local quality = trackQuality or baseQuality
 
+    local state = Insight.GetTipState(tooltip)
     if quality and quality >= 0 then
         local r, g, b = GetItemQualityColor(quality)
         if r then
             Insight.sepR, Insight.sepG, Insight.sepB = r, g, b
         end
-        tooltip._insightItemQuality = quality
+        state.itemQuality = quality
         ApplyItemIdentity(tooltip, quality)
     else
         Insight.sepR, Insight.sepG, Insight.sepB = nil, nil, nil
-        tooltip._insightItemQuality = nil
+        state.itemQuality = nil
     end
 
     -- Gradient is width-neutral (no AddLine), safe for ShoppingTooltip1/2.
@@ -397,25 +415,27 @@ local function OnItemTooltip(tooltip, data)
 
     if tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2 then return end
 
-    tooltip._insightItemMetadata = true
-    tooltip._insightTooltipType  = "item"
-    tooltip._insightLastItemID   = itemID
-    if tooltip._insightLineTags then wipe(tooltip._insightLineTags) end
+    state.itemMetadata = true
+    state.tooltipType  = "item"
+    state.lastItemID   = itemID
+    if state.lineTags then wipe(state.lineTags) end
     -- Structured item blocks (transmog, etc.)
     Insight.ProcessItemTooltip(tooltip, itemID, quality)
 end
 
 local function OnUnitTooltip(tooltip, data)
     if tooltip ~= GameTooltip or not Insight.IsInsightEnabled() then return end
+    if Insight.IsWidgetTooltip(tooltip) then return end
     local unit = ResolveTooltipUnitToken(tooltip)
     if not unit then return end
     -- Dedupe by Blizzard's dataInstanceID (non-secret, bumps per tooltip display),
     -- not a sticky boolean. A fade-out→re-hover transition can refresh the
     -- tooltip contents without firing SetUnit/OnShow — the old boolean flag
     -- stayed `true` and silently blocked re-processing for the new unit.
+    local state = Insight.GetTipState(tooltip)
     local instanceID = data and data.dataInstanceID
-    if instanceID and tooltip._insightUnitTooltipInstance == instanceID then return end
-    tooltip._insightUnitTooltipInstance = instanceID or true
+    if instanceID and state.unitTooltipInstance == instanceID then return end
+    state.unitTooltipInstance = instanceID or true
     ProcessUnitTooltip(tooltip)
 end
 
@@ -436,10 +456,11 @@ anchorFrame:SetClampedToScreen(true)
 anchorFrame:SetFrameStrata("DIALOG")
 anchorFrame:Hide()
 anchorFrame:HookScript("OnShow", function(self)
-    self._insightPlainShown = true
+    Insight.GetTipState(self).plainShown = true
 end)
 anchorFrame:HookScript("OnHide", function(self)
-    self._insightPlainShown = false
+    local state = Insight.PeekTipState(self)
+    if state then state.plainShown = false end
 end)
 
 local anchorLabel = anchorFrame:CreateFontString(nil, "OVERLAY")
@@ -548,7 +569,7 @@ local function CreateMockTooltipFrame(parent)
             end
         end
         self._lineCount      = 0
-        self._insightLineTags = {}
+        Insight.GetTipState(self).lineTags = {}
     end
 
     function mock:AddLine(text, r, g, b)
@@ -600,7 +621,8 @@ local function RefreshPullout()
     else
         if Insight.RenderTestTooltipContent then Insight.RenderTestTooltipContent(pulloutMock) end
     end
-    pulloutMock._insightTooltipType = (mode == "player" or mode == "npc" or mode == "item") and mode or nil
+    Insight.GetTipState(pulloutMock).tooltipType =
+        (mode == "player" or mode == "npc" or mode == "item") and mode or nil
     Insight.StyleFonts(pulloutMock)
     local br, bg, bb, ba = 0.77, 0.12, 0.23, 0.60
     if mode == "npc" and FACTION_BAR_COLORS and FACTION_BAR_COLORS[2] then
@@ -665,7 +687,8 @@ function Insight.ApplyInsightOptions()
         ApplyLiveBackdropColor(anchorFrame)
     end
     for _, tt in ipairs(tooltipsToStyle) do
-        tt._insightStyled = nil
+        local state = Insight.PeekTipState(tt)
+        if state then state.styled = nil end
         ApplyLiveBackdropColor(tt)
     end
     if addon.DashboardPreview and addon.DashboardPreview.NotifyRefresh then
@@ -769,13 +792,15 @@ eventFrame:SetScript("OnEvent", function(self, event, guid)
     end
     if event == "UPDATE_MOUSEOVER_UNIT" then
         if not Insight.IsInsightEnabled() then return end
+        local s = Insight.PeekTipState(GameTooltip)
         if SafeUnitExistsKnown("mouseover") == false
             and TooltipPlainShown(GameTooltip)
-            and GameTooltip._insightUnitTooltip then
+            and s and s.unitTooltip then
             C_Timer.After(0, function()
                 if SafeUnitExistsKnown("mouseover") ~= false then return end
                 if not TooltipPlainShown(GameTooltip) then return end
-                if not GameTooltip._insightUnitTooltip then return end
+                local s2 = Insight.PeekTipState(GameTooltip)
+                if not (s2 and s2.unitTooltip) then return end
                 GameTooltip:Hide()
             end)
         end
@@ -796,12 +821,14 @@ eventFrame:SetScript("OnEvent", function(self, event, guid)
         end)
         if guidMatches then
             Insight.CacheInspect(guid, "mouseover")
-            if TooltipPlainShown(GameTooltip) and GameTooltip._insightUnitTooltip then
+            local s = Insight.PeekTipState(GameTooltip)
+            if TooltipPlainShown(GameTooltip) and s and s.unitTooltip then
                 GameTooltip:SetUnit("mouseover")
                 C_Timer.After(0.25, function()
                     if not Insight.IsInsightEnabled() then return end
                     if not TooltipPlainShown(GameTooltip) then return end
-                    if not GameTooltip._insightUnitTooltip then return end
+                    local s2 = Insight.PeekTipState(GameTooltip)
+                    if not (s2 and s2.unitTooltip) then return end
                     if SafeUnitExistsKnown("mouseover") ~= false then return end
                     GameTooltip:Hide()
                 end)

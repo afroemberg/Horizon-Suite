@@ -80,7 +80,10 @@ local function ApplyFixedAnchor(tooltip)
 end
 
 function Insight.HookCursorAnchor()
-    GameTooltip:SetClampedToScreen(true)
+    -- Note: do NOT call GameTooltip:SetClampedToScreen here. Mutating the secure
+    -- GameTooltip frame from addon code at init taints subsequent secret-value
+    -- comparisons in widget layout (e.g. POI tooltip Hide). Blizzard already
+    -- defaults the GameTooltip to clamped — we don't need to set it.
     hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
         if not Insight.IsInsightEnabled() then return end
         if not tooltip or not tooltip.SetOwner then return end

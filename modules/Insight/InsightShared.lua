@@ -44,14 +44,72 @@ local function GetInsightTransmogSize()
     return math.max(6, tonumber(addon.GetDB and addon.GetDB("insightTransmogSize", 11)) or 11)
 end
 
+-- ============================================================================
+-- TOOLTIP STATE SIDE TABLE
+-- Per-tooltip flags (`_insightPlainShown`, `_insightStyled`, `_insightLineTags`,
+-- etc.) used to live on the tooltip frame as direct fields. Midnight propagates
+-- "tainted by HorizonSuite" through any subsequent secret-value comparison on
+-- a frame we mutated, which manifested on POI tooltip Hide → widget layout. We
+-- now keep all per-tooltip state on a weak-keyed side table so the underlying
+-- secure GameTooltip frame is left untouched.
+-- ============================================================================
+
+local tooltipStates = setmetatable({}, { __mode = "k" })
+
+--- Get-or-create the state table for a tooltip. Returns a real table; safe to
+--- index/assign without nil-checks. Pass nil-tolerant: returns an empty,
+--- discarded table on nil so callers don't have to branch.
+--- @param tt table|nil
+--- @return table
+function Insight.GetTipState(tt)
+    if not tt then return {} end
+    local s = tooltipStates[tt]
+    if not s then
+        s = {}
+        tooltipStates[tt] = s
+    end
+    return s
+end
+
+--- Read-only state lookup. Returns nil when no state exists; callers should
+--- guard `local s = Insight.PeekTipState(tt); if s and s.foo then ...`.
+--- @param tt table|nil
+--- @return table|nil
+function Insight.PeekTipState(tt)
+    if not tt then return nil end
+    return tooltipStates[tt]
+end
+
+--- Drop the state row entirely (e.g. on disable / reset).
+function Insight.ClearTipState(tt)
+    if tt then tooltipStates[tt] = nil end
+end
+
+--- True when the tooltip is driving a Blizzard widget set (POIs, encounter
+--- widgets, etc.). Branches in our hooks bail on these so we don't mutate the
+--- backdrop / NineSlice / state of a widget-driven tooltip — its widget layout
+--- compares values that Midnight treats as secret if we've touched the frame.
+--- @param tt table|nil
+--- @return boolean
+function Insight.IsWidgetTooltip(tt)
+    if not tt then return false end
+    local ok, id = pcall(function() return tt.widgetSetID end)
+    return ok and id ~= nil and id ~= 0
+end
+
 function Insight.TagLines(tooltip, tag, fn)
     local before = tooltip:NumLines()
     fn()
     local after = tooltip:NumLines()
     if after > before then
-        tooltip._insightLineTags = tooltip._insightLineTags or {}
+        local state = Insight.GetTipState(tooltip)
+        local tags = state.lineTags
+        if not tags then
+            tags = {}
+            state.lineTags = tags
+        end
         for i = before + 1, after do
-            tooltip._insightLineTags[i] = tag
+            tags[i] = tag
         end
     end
 end
@@ -357,7 +415,8 @@ end
 local function StyleFonts(tooltip)
     if not tooltip then return end
     local S        = Insight.Scaled
-    local tags     = tooltip._insightLineTags
+    local state    = Insight.PeekTipState(tooltip)
+    local tags     = state and state.lineTags
     local headerSz = GetInsightHeaderSize()
     local bodySz   = GetInsightBodySize()
     local sizeForTag = {
@@ -367,7 +426,7 @@ local function StyleFonts(tooltip)
         transmog = GetInsightTransmogSize(),
     }
 
-    local tooltipType = tooltip._insightTooltipType
+    local tooltipType = state and state.tooltipType
     if tooltipType == "player" then
         headerSz             = addon.GetDB("insightPlayerHeaderSize", headerSz)
         bodySz               = addon.GetDB("insightPlayerBodySize",   bodySz)

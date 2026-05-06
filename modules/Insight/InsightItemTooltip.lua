@@ -182,11 +182,12 @@ local gradientReentry = {}
 
 -- Core writer shared by the sync entry point and the persistent hook.
 -- Reads the current (or incoming) text, strips Blizzard escapes, rebuilds
--- as a gradient of tooltip._insightItemQuality, and forces vertex-white so
--- Blizzard's SetTextColor can't flatten the per-char escapes.
+-- as a gradient of the per-tooltip side-table itemQuality, and forces
+-- vertex-white so Blizzard's SetTextColor can't flatten the per-char escapes.
 local function WriteGradient(tooltip, fs, incomingText)
     if gradientReentry[fs] then return end
-    local quality = tooltip._insightItemQuality
+    local state = Insight.PeekTipState(tooltip)
+    local quality = state and state.itemQuality
     if not quality or quality < 0 then return end
     if not Insight.IsInsightEnabled() then return end
     if not addon.GetDB("insightItemNameGradient", false) then return end
@@ -207,7 +208,7 @@ local function WriteGradient(tooltip, fs, incomingText)
 end
 
 --- Apply the gradient to the tooltip's name line immediately. Callers must
---- have stashed the effective quality on tooltip._insightItemQuality first
+--- have stashed the effective quality on the side-table itemQuality first
 --- (OnItemTooltip does this, RenderItemPreviewContent does it too). The
 --- persistent hook keeps the gradient alive across later Blizzard writes.
 --- @param tooltip table GameTooltip-like frame with <name>TextLeft1 FontString
@@ -225,8 +226,9 @@ end
 --- gradient in the same frame. Idempotent per-tooltip.
 --- @param tooltip table GameTooltip-like frame
 function Insight.InstallItemNameGradientHook(tooltip)
-    if tooltip._insightGradientTextHooked then return end
-    tooltip._insightGradientTextHooked = true
+    local state = Insight.GetTipState(tooltip)
+    if state.gradientTextHooked then return end
+    state.gradientTextHooked = true
     local fs = _G[tooltip:GetName() .. "TextLeft1"]
     if not fs then return end
 
@@ -240,7 +242,8 @@ function Insight.InstallItemNameGradientHook(tooltip)
     -- colour multiplies with our per-character escapes and flattens the
     -- gradient. Snap it back to white whenever the tooltip is in item mode.
     hooksecurefunc(fs, "SetTextColor", function(self, r, g, b)
-        if not tooltip._insightItemQuality then return end
+        local s = Insight.PeekTipState(tooltip)
+        if not (s and s.itemQuality) then return end
         if r == 1 and g == 1 and b == 1 then return end
         if gradientReentry[self] then return end
         gradientReentry[self] = true
@@ -329,7 +332,7 @@ function Insight.RenderItemPreviewContent(tooltip)
         qr, qg, qb = c.r, c.g, c.b
     end
     tooltip:AddLine(itemName, qr, qg, qb)
-    tooltip._insightItemQuality = quality
+    Insight.GetTipState(tooltip).itemQuality = quality
     Insight.ApplyItemNameGradient(tooltip)
     if itemLevel then
         tooltip:AddLine("Item Level " .. tostring(itemLevel), 1, 1, 1)
