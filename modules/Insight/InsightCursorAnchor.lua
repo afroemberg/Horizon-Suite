@@ -41,6 +41,44 @@ local function GetCursorOffsetY()
     return tonumber(addon.GetDB("insightCursorOffsetY", 0)) or 0
 end
 
+-- Owners parented under WorldMapFrame keep Blizzard's native anchor: re-anchoring inside
+-- the map causes a one-frame jump and re-introduces taint on the same widget update.
+local function OwnerIsUnderWorldMap(frame)
+    local worldMap = _G.WorldMapFrame
+    if not worldMap or not frame or not frame.GetParent then return false end
+    local f = frame
+    for _ = 1, 12 do
+        if f == worldMap then return true end
+        local ok, parent = pcall(f.GetParent, f)
+        if not ok or not parent then return false end
+        f = parent
+    end
+    return false
+end
+
+local pendingAnchorTimers = setmetatable({}, { __mode = "k" })
+
+local function ApplyCursorAnchor(tooltip, parent)
+    if not tooltip or not tooltip.SetOwner then return end
+    if tooltip.IsForbidden and tooltip:IsForbidden() then return end
+    if parent and parent.IsForbidden and parent:IsForbidden() then return end
+    local side = GetCursorSide()
+    if side == "left" then
+        tooltip:SetOwner(parent, "ANCHOR_CURSOR_LEFT", GetCursorOffsetX(), GetCursorOffsetY())
+    elseif side == "right" then
+        tooltip:SetOwner(parent, "ANCHOR_CURSOR_RIGHT", GetCursorOffsetX(), GetCursorOffsetY())
+    else
+        tooltip:SetOwner(parent, "ANCHOR_CURSOR", 0, 0)
+    end
+end
+
+local function ApplyFixedAnchor(tooltip)
+    if not tooltip or not tooltip.ClearAllPoints or not tooltip.SetPoint then return end
+    if tooltip.IsForbidden and tooltip:IsForbidden() then return end
+    tooltip:ClearAllPoints()
+    tooltip:SetPoint(GetFixedPoint(), UIParent, GetFixedPoint(), GetFixedX(), GetFixedY())
+end
+
 function Insight.HookCursorAnchor()
     GameTooltip:SetClampedToScreen(true)
     hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
@@ -48,21 +86,27 @@ function Insight.HookCursorAnchor()
         if not tooltip or not tooltip.SetOwner then return end
         if tooltip.IsForbidden and tooltip:IsForbidden() then return end
         if parent and parent.IsForbidden and parent:IsForbidden() then return end
+        if OwnerIsUnderWorldMap(parent) then return end
 
         local mode = GetAnchorMode()
-        if mode == "cursor" then
-            local side = GetCursorSide()
-            if side == "left" then
-                tooltip:SetOwner(parent, "ANCHOR_CURSOR_LEFT", GetCursorOffsetX(), GetCursorOffsetY())
-            elseif side == "right" then
-                tooltip:SetOwner(parent, "ANCHOR_CURSOR_RIGHT", GetCursorOffsetX(), GetCursorOffsetY())
+        if mode ~= "cursor" and mode ~= "fixed" then return end
+
+        -- Defer to next tick so Blizzard's GameTooltip_AddWidgetSet can complete
+        -- on a clean stack: mutating SetOwner/SetPoint synchronously in this hook
+        -- taints widget-template width arithmetic (item display, map POIs, etc.)
+        -- via the AsyncCallbackSystem fired from ContinuableContainer.
+        local prev = pendingAnchorTimers[tooltip]
+        if prev and prev.Cancel then prev:Cancel() end
+        if not (C_Timer and C_Timer.NewTimer) then return end
+        pendingAnchorTimers[tooltip] = C_Timer.NewTimer(0, function()
+            pendingAnchorTimers[tooltip] = nil
+            if not Insight.IsInsightEnabled() then return end
+            if mode == "cursor" then
+                ApplyCursorAnchor(tooltip, parent)
             else
-                tooltip:SetOwner(parent, "ANCHOR_CURSOR", 0, 0)
+                ApplyFixedAnchor(tooltip)
             end
-        elseif mode == "fixed" then
-            tooltip:ClearAllPoints()
-            tooltip:SetPoint(GetFixedPoint(), UIParent, GetFixedPoint(), GetFixedX(), GetFixedY())
-        end
+        end)
     end)
 end
 
