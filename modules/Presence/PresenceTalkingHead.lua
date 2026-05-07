@@ -30,12 +30,17 @@ local function GetOption(key, default)
     return addon.GetDB and addon.GetDB(key, default) or default
 end
 
-local function FontPath(dbKey, fallback)
-    local raw = GetOption(dbKey, nil)
-    if raw then
+local FONT_USE_GLOBAL = "__global__"
+
+local function FontPath(dbKey)
+    local raw = GetOption(dbKey, FONT_USE_GLOBAL)
+    if raw == FONT_USE_GLOBAL or not raw or raw == "" then
+        raw = addon.GetDB and addon.GetDB("fontPath", nil) or nil
+    end
+    if raw and raw ~= "" and raw ~= FONT_USE_GLOBAL then
         return (addon.ResolveFontPath and addon.ResolveFontPath(raw)) or raw
     end
-    return fallback or addon.FONT_PATH or "Fonts\\FRIZQT__.TTF"
+    return (addon.GetDefaultFontPath and addon.GetDefaultFontPath()) or "Fonts\\FRIZQT__.TTF"
 end
 
 -- ============================================================================
@@ -46,7 +51,7 @@ end
 local function ApplyTalkingHeadContent(frame)
     if not frame then return end
 
-    local textFont = FontPath("talkingHeadTextFontPath", nil)
+    local textFont = FontPath("talkingHeadTextFontPath")
     local textSize = tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize
     if frame.TextFrame and frame.TextFrame.Text then
         local t = frame.TextFrame.Text
@@ -54,7 +59,7 @@ local function ApplyTalkingHeadContent(frame)
         t:SetShadowOffset(1, -1)
     end
 
-    local nameFont = FontPath("talkingHeadNameFontPath", nil)
+    local nameFont = FontPath("talkingHeadNameFontPath")
     local nameSize = tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize
     local nr = tonumber(GetOption("talkingHeadNameColorR", DEFAULTS.talkingHeadNameColorR)) or DEFAULTS.talkingHeadNameColorR
     local ng = tonumber(GetOption("talkingHeadNameColorG", DEFAULTS.talkingHeadNameColorG)) or DEFAULTS.talkingHeadNameColorG
