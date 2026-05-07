@@ -10,6 +10,14 @@ All notable changes to Horizon Suite are documented here.
 
 ---
 
+## [4.17.5] – 2026-05-07
+
+### 🐛 Fixes
+
+- **(Focus)** Mythic+ block "Always Show" toggle now displays the block as a preview when you're outside a Mythic+ dungeon — previously it had no effect. The toggle is reset to off on upgrade so the new preview doesn't appear unexpectedly. Tooltip wording updated to match.
+
+---
+
 ## [4.17.4] – 2026-05-04
 
 ### 🔧 Improvements
