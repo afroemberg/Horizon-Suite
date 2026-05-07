@@ -18,28 +18,25 @@ local function updateTalkingHead()
     end
 end
 
-local defaultFontPath = (addon.GetDefaultFontPath and addon.GetDefaultFontPath()) or "Fonts\\FRIZQT__.TTF"
+local FONT_USE_GLOBAL = "__global__"
 
-local function MakeFontOptions(dbKey)
-    return function()
-        if addon.RefreshFontList then addon.RefreshFontList() end
-        local list = (addon.GetFontList and addon.GetFontList()) or {}
-        local saved = getDB(dbKey, defaultFontPath)
-        if addon.GetFontNameForPath then
-            local mapped = addon.GetFontNameForPath(saved)
-            if mapped and mapped ~= "" and mapped ~= "Custom" and mapped ~= saved then
-                local path = addon.ResolveFontPath and addon.ResolveFontPath(mapped) or nil
-                if path and path == saved then saved = mapped end
-            end
-        end
-        for _, o in ipairs(list) do
-            if o[2] == saved then return list end
-        end
-        local out = {}
-        for i = 1, #list do out[i] = list[i] end
-        out[#out + 1] = { "Custom", saved }
-        return out
+local function GetFontOptions(dbKey)
+    if addon.RefreshFontList then addon.RefreshFontList() end
+    local list = (addon.GetFontList and addon.GetFontList()) or {}
+    local out = { { L["FOCUS_GLOBAL_FONT"] or "Use global font", FONT_USE_GLOBAL } }
+    for i = 1, #list do out[#out + 1] = list[i] end
+    local saved = getDB(dbKey, FONT_USE_GLOBAL)
+    if saved == FONT_USE_GLOBAL then return out end
+    for _, o in ipairs(out) do
+        if o[2] == saved then return out end
     end
+    out[#out + 1] = { L["FOCUS_CUSTOM"] or "Custom", saved }
+    return out
+end
+
+local function DisplayFont(v)
+    if v == FONT_USE_GLOBAL then return L["FOCUS_GLOBAL_FONT"] or "Use global font" end
+    return addon.GetFontNameForPath and addon.GetFontNameForPath(v) or v
 end
 
 local category = {
@@ -72,10 +69,10 @@ local category = {
             desc              = L["TALKING_HEAD_NAME_FONT_DESC"] or "Font family for the NPC name.",
             dbKey             = "talkingHeadNameFontPath",
             searchable        = true,
-            options           = MakeFontOptions("talkingHeadNameFontPath"),
-            get               = function() return getDB("talkingHeadNameFontPath", defaultFontPath) end,
+            options           = function() return GetFontOptions("talkingHeadNameFontPath") end,
+            get               = function() return getDB("talkingHeadNameFontPath", FONT_USE_GLOBAL) end,
             set               = function(v) setDB("talkingHeadNameFontPath", v); updateTalkingHead() end,
-            displayFn         = addon.GetFontNameForPath,
+            displayFn         = DisplayFont,
             fontPreviewInList = true,
         },
         {
@@ -103,10 +100,10 @@ local category = {
             desc              = L["TALKING_HEAD_TEXT_FONT_DESC"] or "Font family for NPC dialogue text.",
             dbKey             = "talkingHeadTextFontPath",
             searchable        = true,
-            options           = MakeFontOptions("talkingHeadTextFontPath"),
-            get               = function() return getDB("talkingHeadTextFontPath", defaultFontPath) end,
+            options           = function() return GetFontOptions("talkingHeadTextFontPath") end,
+            get               = function() return getDB("talkingHeadTextFontPath", FONT_USE_GLOBAL) end,
             set               = function(v) setDB("talkingHeadTextFontPath", v); updateTalkingHead() end,
-            displayFn         = addon.GetFontNameForPath,
+            displayFn         = DisplayFont,
             fontPreviewInList = true,
         },
         {
