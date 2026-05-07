@@ -14,6 +14,16 @@ local addon = _G.HorizonSuite
 
 addon.PATCH_NOTES = {
 
+    ["4.17.5"] = {
+        date = "2026-05-07",
+        {
+            section = "Fixes",
+            bullets = {
+                "Focus: Mythic+ block 'Always Show' toggle now previews the block outside of a Mythic+ dungeon — previously it did nothing. The toggle is reset to off on upgrade.",
+            },
+        },
+    },
+
     ["4.17.4"] = {
         date = "2026-05-04",
         {
