@@ -1436,6 +1436,24 @@ local function BuildCategory(tab, tabIndex, options, refreshers, optionFrames)
                 if optionFrames then optionFrames["presencePreview"] = { tabIndex = tabIndex, frame = previewFrame } end
                 table.insert(refreshers, previewFrame)
             end
+        elseif opt.type == "talkingHeadPreview" and currentCard then
+            local cardContent = currentCard.contentContainer or currentCard
+            local contentAnchor = currentCard.contentAnchor
+            local previewWidget = addon.Presence and addon.Presence.CreateTalkingHeadPreviewWidget and
+                addon.Presence.CreateTalkingHeadPreviewWidget(cardContent)
+            local previewFrame = previewWidget and previewWidget.frame
+            if previewFrame then
+                previewFrame:SetPoint("TOPLEFT", contentAnchor, "BOTTOMLEFT", 0, -OptionGap)
+                previewFrame:SetPoint("RIGHT", currentCard, "RIGHT", -CardPadding, 0)
+                if previewWidget.Refresh then previewFrame.Refresh = previewWidget.Refresh end
+                if previewFrame.Refresh then previewFrame:Refresh() end
+                currentCard.contentAnchor = previewFrame
+                local previewH = previewFrame:GetHeight() or 110
+                currentCard.contentHeight = currentCard.contentHeight + OptionGap + previewH
+                tinsert(currentCard.widgetList, { frame = previewFrame, rowHeight = previewH, visibleWhen = nil })
+                if optionFrames then optionFrames["talkingHeadPreview"] = { tabIndex = tabIndex, frame = previewFrame } end
+                table.insert(refreshers, previewFrame)
+            end
         elseif opt.type == "button" and currentCard then
             local cardContent = currentCard.contentContainer or currentCard
             local contentAnchor = currentCard.contentAnchor

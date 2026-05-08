@@ -1115,7 +1115,7 @@ function addon.DashboardDetailView_Init(env)
                 end
                 
                 -- Store the option identifier to track its parent card
-                local optId = opt.dbKey or (opt.type == "presencePreview" and "presencePreview") or (opt.type == "moduleReloadPrompt" and "_module_reload_prompt") or (moduleSubName .. "_" .. (type(opt.name)=="function" and opt.name() or opt.name or ""):gsub("%s+", "_"))
+                local optId = opt.dbKey or (opt.type == "presencePreview" and "presencePreview") or (opt.type == "talkingHeadPreview" and "talkingHeadPreview") or (opt.type == "moduleReloadPrompt" and "_module_reload_prompt") or (moduleSubName .. "_" .. (type(opt.name)=="function" and opt.name() or opt.name or ""):gsub("%s+", "_"))
                 currentCard.optionIds[optId] = true
 
                 -- Per-setting "(New!)" suffix: declared via `isNew = "<version>"`.
@@ -1180,6 +1180,14 @@ function addon.DashboardDetailView_Init(env)
                         end,
                         scale = 0.55,
                     })
+                    widget = previewWidget and previewWidget.frame or nil
+                    if widget and previewWidget.Refresh then
+                        widget.Refresh = previewWidget.Refresh
+                    end
+                    detailOptionFrames[optId] = widget
+                elseif opt.type == "talkingHeadPreview" then
+                    local previewWidget = addon.Presence and addon.Presence.CreateTalkingHeadPreviewWidget and
+                        addon.Presence.CreateTalkingHeadPreviewWidget(currentCard.settingsContainer)
                     widget = previewWidget and previewWidget.frame or nil
                     if widget and previewWidget.Refresh then
                         widget.Refresh = previewWidget.Refresh

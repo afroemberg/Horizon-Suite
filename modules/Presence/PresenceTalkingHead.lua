@@ -27,7 +27,10 @@ addon.Presence.TalkingHeadDefaults = DEFAULTS
 -- ============================================================================
 
 local function GetOption(key, default)
-    return addon.GetDB and addon.GetDB(key, default) or default
+    -- Do NOT use `addon.GetDB(...) or default`: that collapses false → default,
+    -- breaking any boolean option whose stored value is false.
+    if not addon.GetDB then return default end
+    return addon.GetDB(key, default)
 end
 
 local FONT_USE_GLOBAL = "__global__"
@@ -156,6 +159,98 @@ end)
 if _G.TalkingHeadFrame then
     InstallHooks(_G.TalkingHeadFrame)
     _setupFrame:UnregisterEvent("TALKINGHEAD_REQUESTED")
+end
+
+-- ============================================================================
+-- PREVIEW WIDGET (options dashboard)
+-- ============================================================================
+
+local PREVIEW_HEIGHT     = 110
+local PREVIEW_PORTRAIT_W = 110
+
+function addon.Presence.CreateTalkingHeadPreviewWidget(parent)
+    if not parent then return nil end
+
+    local L = addon.L
+
+    local frame = CreateFrame("Frame", nil, parent)
+    frame:SetHeight(PREVIEW_HEIGHT)
+
+    local bg = frame:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints(frame)
+    bg:SetColorTexture(0.05, 0.05, 0.07, 0.92)
+
+    if addon.CreateBorder then
+        addon.CreateBorder(frame, { 0.18, 0.18, 0.24, 0.95 })
+    end
+
+    -- Plain Frame container for the portrait area. We show/hide this rather than
+    -- the PlayerModel directly: PlayerModel:SetShown(false) can be overridden when
+    -- the model finishes loading asynchronously, whereas hiding a plain parent
+    -- Frame makes all its children effectively invisible regardless of their own state.
+    local portraitArea = CreateFrame("Frame", nil, frame)
+    portraitArea:SetWidth(PREVIEW_PORTRAIT_W)
+    portraitArea:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    portraitArea:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+
+    local portraitBg = portraitArea:CreateTexture(nil, "BACKGROUND", nil, -1)
+    portraitBg:SetAllPoints(portraitArea)
+    portraitBg:SetColorTexture(0.03, 0.03, 0.05, 0.95)
+
+    local portrait = CreateFrame("PlayerModel", nil, portraitArea)
+    portrait:SetPoint("TOPLEFT", portraitArea, "TOPLEFT", 2, -2)
+    portrait:SetPoint("BOTTOMRIGHT", portraitArea, "BOTTOMRIGHT", -2, 2)
+    portrait:SetUnit("player")
+    portrait:SetCamDistanceScale(0.85)
+    portrait:SetPortraitZoom(1)
+
+    local sep = frame:CreateTexture(nil, "ARTWORK")
+    sep:SetWidth(1)
+    sep:SetPoint("TOP", frame, "TOP", 0, -6)
+    sep:SetPoint("BOTTOM", frame, "BOTTOM", 0, 6)
+    sep:SetPoint("LEFT", portraitArea, "RIGHT", 0, 0)
+    sep:SetColorTexture(0.25, 0.28, 0.35, 0.8)
+
+    local nameText = frame:CreateFontString(nil, "OVERLAY")
+    nameText:SetFont(FontPath("talkingHeadNameFontPath"), DEFAULTS.talkingHeadNameSize, "OUTLINE")
+    nameText:SetPoint("TOPLEFT", frame, "TOPLEFT", PREVIEW_PORTRAIT_W + 12, -10)
+    nameText:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
+    nameText:SetJustifyH("LEFT")
+    nameText:SetText(L["TALKING_HEAD_PREVIEW_NPC_NAME"] or "Thrall")
+
+    local dialogueText = frame:CreateFontString(nil, "OVERLAY")
+    dialogueText:SetFont(FontPath("talkingHeadTextFontPath"), DEFAULTS.talkingHeadTextSize, "OUTLINE")
+    dialogueText:SetPoint("TOPLEFT", nameText, "BOTTOMLEFT", 0, -8)
+    dialogueText:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
+    dialogueText:SetJustifyH("LEFT")
+    dialogueText:SetNonSpaceWrap(true)
+    dialogueText:SetText(L["TALKING_HEAD_PREVIEW_DIALOGUE"] or "Azeroth needs heroes. Will you answer the call?")
+
+    local function Refresh()
+        local nameFont = FontPath("talkingHeadNameFontPath")
+        local nameSize = tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize
+        nameText:SetFont(nameFont, nameSize, "OUTLINE")
+        nameText:SetShadowOffset(1, -1)
+        local nr = tonumber(GetOption("talkingHeadNameColorR", DEFAULTS.talkingHeadNameColorR)) or DEFAULTS.talkingHeadNameColorR
+        local ng = tonumber(GetOption("talkingHeadNameColorG", DEFAULTS.talkingHeadNameColorG)) or DEFAULTS.talkingHeadNameColorG
+        local nb = tonumber(GetOption("talkingHeadNameColorB", DEFAULTS.talkingHeadNameColorB)) or DEFAULTS.talkingHeadNameColorB
+        nameText:SetTextColor(nr, ng, nb)
+
+        local textFont = FontPath("talkingHeadTextFontPath")
+        local textSize = tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize
+        dialogueText:SetFont(textFont, textSize, "OUTLINE")
+        dialogueText:SetShadowOffset(1, -1)
+
+        local showPortrait = GetOption("talkingHeadShowPortrait", DEFAULTS.talkingHeadShowPortrait)
+        portraitArea:SetShown(showPortrait)
+        sep:SetShown(showPortrait)
+    end
+
+    frame.Refresh = Refresh
+    frame:SetScript("OnShow", Refresh)
+    Refresh()
+
+    return { frame = frame, Refresh = Refresh }
 end
 
 -- ============================================================================
