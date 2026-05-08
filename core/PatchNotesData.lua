@@ -14,6 +14,18 @@ local addon = _G.HorizonSuite
 
 addon.PATCH_NOTES = {
 
+    ["4.17.6"] = {
+        date = "2026-05-08",
+        {
+            section = "Improvements",
+            bullets = {
+                "Focus: bar texture and colour changes now apply live without requiring a UI reload.",
+                "Axis: Welcome and News content now honours the Dashboard Font option.",
+                "Axis: choose a softer heading colour for the Dashboard Welcome and News blocks — previously locked to pure white, which is uncomfortable on HDR displays.",
+            },
+        },
+    },
+
     ["4.17.5"] = {
         date = "2026-05-07",
         {

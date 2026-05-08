@@ -10,6 +10,16 @@ All notable changes to Horizon Suite are documented here.
 
 ---
 
+## [4.17.6] – 2026-05-08
+
+### 🔧 Improvements
+
+- **(Focus)** Bar texture and colour changes now apply live without requiring a UI reload.
+- **(Axis)** Welcome and News content now respects the Dashboard Font option instead of using a hardcoded font.
+- **(Axis) Configurable Dashboard heading colour** — Choose a softer accent colour for the Welcome and News headings so pure white at full HDR luminance no longer dominates the UI.
+
+---
+
 ## [4.17.5] – 2026-05-07
 
 ### 🐛 Fixes
