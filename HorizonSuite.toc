@@ -21,6 +21,9 @@ localisation/horizon/zhCN.lua
 Utilities.lua
 core/ClassIconMedia.lua
 media/MediaRegistry.lua
+Libs/LibSharedMedia-3.0/LibStub/LibStub.lua
+Libs/LibSharedMedia-3.0/CallbackHandler-1.0/CallbackHandler-1.0.lua
+Libs/LibSharedMedia-3.0/LibSharedMedia-3.0/LibSharedMedia-3.0.lua
 core/Config.lua
 core/Core.lua
 core/UrlCopyDialog.lua

@@ -1,4 +1,4 @@
-local addon = _G._HorizonSuite_Loading or _G.HorizonSuiteBeta or _G.HorizonSuite
+local addon = _G.HorizonSuite
 if not addon then return end
 
 addon.Presence = addon.Presence or {}
@@ -14,7 +14,7 @@ local DEFAULTS = {
     talkingHeadCloseButton  = false,
     talkingHeadMuteVoice    = false,
     talkingHeadScale        = 1.0,
-    talkingHeadNameSize     = 13,
+    talkingHeadNameSize     = 16,
     talkingHeadNameColorR   = 0.55,
     talkingHeadNameColorG   = 0.65,
     talkingHeadNameColorB   = 0.75,
@@ -46,6 +46,38 @@ local function FontPath(dbKey)
     return (addon.GetDefaultFontPath and addon.GetDefaultFontPath()) or "Fonts\\FRIZQT__.TTF"
 end
 
+-- Font-replacement addons hook both SetFontObject and SetFont on managed FontStrings:
+-- SetFontObject re-applies their object, SetFont keeps the size but substitutes their
+-- font path. Font objects created with CreateFont() cannot load WoW's virtual (CASC)
+-- fonts anyway. The only reliable path: call SetFont() directly and counter-hook both
+-- methods so that whenever either is overridden we re-apply our desired font.
+local function LockDirectFont(fontString, getFont)
+    local busyObj  = false
+    local busyFont = false
+
+    hooksecurefunc(fontString, "SetFontObject", function(self, obj)
+        if busyObj or not obj then return end
+        busyObj = true
+        self:SetFontObject(nil)
+        local path, size, flags = getFont()
+        if path then
+            self:SetFont(path, size, flags or "OUTLINE")
+            self:SetShadowOffset(1, -1)
+        end
+        busyObj = false
+    end)
+
+    hooksecurefunc(fontString, "SetFont", function(self, path, size, flags)
+        if busyFont then return end
+        local targetPath, targetSize, targetFlags = getFont()
+        if not targetPath or path == targetPath then return end
+        busyFont = true
+        self:SetFont(targetPath, targetSize or size, targetFlags or "OUTLINE")
+        self:SetShadowOffset(1, -1)
+        busyFont = false
+    end)
+end
+
 -- ============================================================================
 -- VISUAL MODES
 -- ============================================================================
@@ -57,9 +89,12 @@ local function ApplyTalkingHeadContent(frame)
     local textFont = FontPath("talkingHeadTextFontPath")
     local textSize = tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize
     if frame.TextFrame and frame.TextFrame.Text then
-        local t = frame.TextFrame.Text
-        t:SetFont(textFont, textSize, "OUTLINE")
-        t:SetShadowOffset(1, -1)
+        local fs = frame.TextFrame.Text
+        -- Blizzard sets a FontObject on each PlayCurrent call; clear it so our
+        -- direct SetFont call takes effect rather than being overridden by the object.
+        fs:SetFontObject(nil)
+        fs:SetFont(textFont, textSize, "OUTLINE")
+        fs:SetShadowOffset(1, -1)
     end
 
     local nameFont = FontPath("talkingHeadNameFontPath")
@@ -69,6 +104,7 @@ local function ApplyTalkingHeadContent(frame)
     local nb = tonumber(GetOption("talkingHeadNameColorB", DEFAULTS.talkingHeadNameColorB)) or DEFAULTS.talkingHeadNameColorB
     if frame.NameFrame and frame.NameFrame.Name then
         local n = frame.NameFrame.Name
+        n:SetFontObject(nil)
         n:SetFont(nameFont, nameSize, "OUTLINE")
         n:SetShadowOffset(1, -1)
         n:SetTextColor(nr, ng, nb)
@@ -78,14 +114,26 @@ end
 -- Frame-level toggles: portrait, background, close button, scale
 local function ApplyTalkingHeadFrame(frame)
     if not frame then return end
-    if frame.MainFrame and frame.MainFrame.Model then
-        frame.MainFrame.Model:SetShown(GetOption("talkingHeadShowPortrait", DEFAULTS.talkingHeadShowPortrait))
+    local showPortrait = GetOption("talkingHeadShowPortrait", DEFAULTS.talkingHeadShowPortrait)
+    -- MainFrame (model) and PortraitFrame (decorative border ring, a sibling of MainFrame
+    -- at TalkingHeadFrame level) are toggled together. Both SetShown and SetAlpha are used:
+    -- SetShown removes the frame from rendering; SetAlpha(0) guards against Blizzard's
+    -- animation scripts calling Show() on the frame between our hooks.
+    if frame.MainFrame then
+        frame.MainFrame:SetShown(showPortrait)
+        frame.MainFrame:SetAlpha(showPortrait and 1 or 0)
+        if frame.MainFrame.CloseButton then
+            frame.MainFrame.CloseButton:SetShown(
+                showPortrait and GetOption("talkingHeadCloseButton", DEFAULTS.talkingHeadCloseButton)
+            )
+        end
+    end
+    if frame.PortraitFrame then
+        frame.PortraitFrame:SetShown(showPortrait)
+        frame.PortraitFrame:SetAlpha(showPortrait and 1 or 0)
     end
     if frame.BackgroundFrame then
         frame.BackgroundFrame:SetAlpha(GetOption("talkingHeadBackground", DEFAULTS.talkingHeadBackground) and 1 or 0)
-    end
-    if frame.MainFrame and frame.MainFrame.CloseButton then
-        frame.MainFrame.CloseButton:SetShown(GetOption("talkingHeadCloseButton", DEFAULTS.talkingHeadCloseButton))
     end
     local scale = math.max(0.5, math.min(2.0, tonumber(GetOption("talkingHeadScale", DEFAULTS.talkingHeadScale)) or DEFAULTS.talkingHeadScale))
     frame:SetScale(scale)
@@ -97,15 +145,18 @@ local function ApplyCurrent(frame)
 end
 
 -- ============================================================================
--- hooksecurefunc HOOKS — permanent post-hooks on TalkingHeadFrame methods
+-- HOOKS — OnShow + hooksecurefunc on PlayCurrent
 -- ============================================================================
 --
--- Why hooksecurefunc on PlayCurrent instead of HookScript("OnShow"):
---   Blizzard's PlayCurrent resets the text FontString's font on every dialogue
---   line, so a skin applied in OnShow is immediately overwritten. Hooking
---   PlayCurrent fires once per line AFTER Blizzard has written its values,
---   which is the only reliable point to override them. It also fires on
---   mid-sequence lines (not just the first show) so skin persists throughout.
+-- We hook both OnShow and PlayCurrent for different reasons:
+--   OnShow  — applies frame-level settings (portrait visibility, scale, etc.)
+--             the moment the frame appears, before PlayCurrent runs. This
+--             prevents a one-frame flash of the portrait when it should be
+--             hidden, and covers code paths where PlayCurrent is not called.
+--   PlayCurrent — applies content settings (fonts, colours) AFTER Blizzard
+--             has written its own values for the new dialogue line. Blizzard
+--             resets FontString fonts inside PlayCurrent on every line, so
+--             OnShow alone is not sufficient for font overrides.
 
 local _hooksInstalled = false
 
@@ -130,6 +181,26 @@ local function InstallHooks(frame)
     if _hooksInstalled then return end
     _hooksInstalled = true
     hooksecurefunc(frame, "PlayCurrent", OnPlayCurrent)
+    frame:HookScript("OnShow", function(self)
+        if addon.IsModuleEnabled and not addon:IsModuleEnabled("presence") then return end
+        if GetOption("talkingHeadEnabled", DEFAULTS.talkingHeadEnabled) then
+            ApplyTalkingHeadFrame(self)
+        end
+    end)
+    if frame.NameFrame and frame.NameFrame.Name then
+        LockDirectFont(frame.NameFrame.Name, function()
+            return FontPath("talkingHeadNameFontPath"),
+                   tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize,
+                   "OUTLINE"
+        end)
+    end
+    if frame.TextFrame and frame.TextFrame.Text then
+        LockDirectFont(frame.TextFrame.Text, function()
+            return FontPath("talkingHeadTextFontPath"),
+                   tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize,
+                   "OUTLINE"
+        end)
+    end
     -- Late-install catch: first dialogue already showing when hooks were wired
     if frame:IsShown() then
         if GetOption("talkingHeadEnabled", DEFAULTS.talkingHeadEnabled) then
@@ -141,24 +212,33 @@ local function InstallHooks(frame)
 end
 
 -- ============================================================================
--- SETUP — TalkingHeadFrame is created lazily on the first TALKINGHEAD_REQUESTED;
--- there is no separate Blizzard addon to listen for, so we hook on that event.
+-- SETUP — Three timing windows for when TalkingHeadFrame becomes available:
+--   1. File load:     TalkingHeadFrame already exists (e.g. after /reload).
+--   2. PLAYER_LOGIN:  Blizzard addons fully initialised; covers most fresh logins.
+--   3. TALKINGHEAD_REQUESTED: frame created on first TH if it wasn't ready earlier.
 -- ============================================================================
 
 local _setupFrame = CreateFrame("Frame")
 _setupFrame:RegisterEvent("TALKINGHEAD_REQUESTED")
-_setupFrame:SetScript("OnEvent", function(self)
+_setupFrame:RegisterEvent("PLAYER_LOGIN")
+_setupFrame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_LOGIN" then
+        -- Always drop PLAYER_LOGIN on fire. If frame is still absent, case 3 covers it.
+        self:UnregisterEvent("PLAYER_LOGIN")
+    end
     local frame = _G.TalkingHeadFrame
     if frame then
         InstallHooks(frame)
         self:UnregisterEvent("TALKINGHEAD_REQUESTED")
+        self:UnregisterEvent("PLAYER_LOGIN")
     end
 end)
 
--- Immediate check in case TalkingHeadFrame already exists (e.g. after /reload)
+-- Case 1: frame exists right now (e.g. /reload).
 if _G.TalkingHeadFrame then
     InstallHooks(_G.TalkingHeadFrame)
     _setupFrame:UnregisterEvent("TALKINGHEAD_REQUESTED")
+    _setupFrame:UnregisterEvent("PLAYER_LOGIN")
 end
 
 -- ============================================================================
@@ -212,25 +292,34 @@ function addon.Presence.CreateTalkingHeadPreviewWidget(parent)
     sep:SetColorTexture(0.25, 0.28, 0.35, 0.8)
 
     local nameText = frame:CreateFontString(nil, "OVERLAY")
-    nameText:SetFont(FontPath("talkingHeadNameFontPath"), DEFAULTS.talkingHeadNameSize, "OUTLINE")
     nameText:SetPoint("TOPLEFT", frame, "TOPLEFT", PREVIEW_PORTRAIT_W + 12, -10)
     nameText:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
     nameText:SetJustifyH("LEFT")
-    nameText:SetText(L["TALKING_HEAD_PREVIEW_NPC_NAME"] or "Thrall")
 
     local dialogueText = frame:CreateFontString(nil, "OVERLAY")
-    dialogueText:SetFont(FontPath("talkingHeadTextFontPath"), DEFAULTS.talkingHeadTextSize, "OUTLINE")
     dialogueText:SetPoint("TOPLEFT", nameText, "BOTTOMLEFT", 0, -8)
     dialogueText:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
     dialogueText:SetJustifyH("LEFT")
     dialogueText:SetNonSpaceWrap(true)
-    dialogueText:SetText(L["TALKING_HEAD_PREVIEW_DIALOGUE"] or "Azeroth needs heroes. Will you answer the call?")
+
+    LockDirectFont(nameText, function()
+        return FontPath("talkingHeadNameFontPath"),
+               tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize,
+               "OUTLINE"
+    end)
+    LockDirectFont(dialogueText, function()
+        return FontPath("talkingHeadTextFontPath"),
+               tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize,
+               "OUTLINE"
+    end)
 
     local function Refresh()
         local nameFont = FontPath("talkingHeadNameFontPath")
         local nameSize = tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize
+        nameText:SetFontObject(nil)  -- clear any inherited FontObject so SetFont applies directly
         nameText:SetFont(nameFont, nameSize, "OUTLINE")
         nameText:SetShadowOffset(1, -1)
+        nameText:SetText(UnitName("player") or L["TALKING_HEAD_PREVIEW_NPC_NAME"] or "You")
         local nr = tonumber(GetOption("talkingHeadNameColorR", DEFAULTS.talkingHeadNameColorR)) or DEFAULTS.talkingHeadNameColorR
         local ng = tonumber(GetOption("talkingHeadNameColorG", DEFAULTS.talkingHeadNameColorG)) or DEFAULTS.talkingHeadNameColorG
         local nb = tonumber(GetOption("talkingHeadNameColorB", DEFAULTS.talkingHeadNameColorB)) or DEFAULTS.talkingHeadNameColorB
@@ -238,8 +327,10 @@ function addon.Presence.CreateTalkingHeadPreviewWidget(parent)
 
         local textFont = FontPath("talkingHeadTextFontPath")
         local textSize = tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize
+        dialogueText:SetFontObject(nil)
         dialogueText:SetFont(textFont, textSize, "OUTLINE")
         dialogueText:SetShadowOffset(1, -1)
+        dialogueText:SetText(L["TALKING_HEAD_PREVIEW_DIALOGUE"] or "Azeroth needs heroes. Will you answer the call?")
 
         local showPortrait = GetOption("talkingHeadShowPortrait", DEFAULTS.talkingHeadShowPortrait)
         portraitArea:SetShown(showPortrait)

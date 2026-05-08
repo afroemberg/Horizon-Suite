@@ -3,7 +3,7 @@
     Self-registers into addon.OptionCategories after OptionsData.lua runs.
 ]]
 
-local addon = _G._HorizonSuite_Loading or _G.HorizonSuiteBeta or _G.HorizonSuite
+local addon = _G.HorizonSuite
 if not addon or not addon.OptionCategories then return end
 
 local L = addon.L
@@ -79,12 +79,12 @@ local category = {
         {
             type  = "slider",
             name  = L["TALKING_HEAD_NAME_SIZE"] or "Name Font Size",
-            desc  = L["TALKING_HEAD_NAME_SIZE_DESC"] or "Font size for the NPC name (10–20).",
+            desc  = L["TALKING_HEAD_NAME_SIZE_DESC"] or "Font size for the NPC name (10–24).",
             dbKey = "talkingHeadNameSize",
             min   = 10,
-            max   = 20,
-            get        = function() return math.max(10, math.min(20, tonumber(getDB("talkingHeadNameSize", D.talkingHeadNameSize)) or D.talkingHeadNameSize)) end,
-            set        = function(v) setDB("talkingHeadNameSize", math.max(10, math.min(20, v))); updateTalkingHead() end,
+            max   = 24,
+            get        = function() return math.max(10, math.min(24, tonumber(getDB("talkingHeadNameSize", D.talkingHeadNameSize)) or D.talkingHeadNameSize)) end,
+            set        = function(v) setDB("talkingHeadNameSize", math.max(10, math.min(24, v))); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
         },
         {
@@ -113,12 +113,12 @@ local category = {
         {
             type  = "slider",
             name  = L["TALKING_HEAD_TEXT_SIZE"] or "Text Font Size",
-            desc  = L["TALKING_HEAD_TEXT_SIZE_DESC"] or "Font size for NPC dialogue text (10–24).",
+            desc  = L["TALKING_HEAD_TEXT_SIZE_DESC"] or "Font size for NPC dialogue text (10–20).",
             dbKey = "talkingHeadTextSize",
             min   = 10,
-            max   = 24,
-            get        = function() return math.max(10, math.min(24, tonumber(getDB("talkingHeadTextSize", D.talkingHeadTextSize)) or D.talkingHeadTextSize)) end,
-            set        = function(v) setDB("talkingHeadTextSize", math.max(10, math.min(24, v))); updateTalkingHead() end,
+            max   = 20,
+            get        = function() return math.max(10, math.min(20, tonumber(getDB("talkingHeadTextSize", D.talkingHeadTextSize)) or D.talkingHeadTextSize)) end,
+            set        = function(v) setDB("talkingHeadTextSize", math.max(10, math.min(20, v))); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
         },
         {
