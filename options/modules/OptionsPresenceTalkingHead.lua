@@ -78,6 +78,7 @@ local category = {
                 "talkingHeadPreview",
             },
         },
+        { type = "section", name = L["TALKING_HEAD_FRAME_CONTENT"] or "Content", visibleWhen = isCustomising },
         {
             type              = "dropdown",
             name              = L["TALKING_HEAD_NAME_FONT"] or "Name Font",
@@ -181,6 +182,7 @@ local category = {
             refreshIds = { "talkingHeadPreview" },
             visibleWhen = function() return isCustomising() and getDB("talkingHeadShowPortrait", D.talkingHeadShowPortrait) end,
         },
+        { type = "section", name = L["TALKING_HEAD_FRAME"] or "Frame", visibleWhen = isCustomising },
         {
             type  = "toggle",
             name  = L["TALKING_HEAD_SHOW_BG"] or "Show Background",
@@ -211,6 +213,7 @@ local category = {
             set         = function(v) setDB("talkingHeadScale", math.max(0.5, math.min(2.0, v))); updateTalkingHead() end,
             visibleWhen = isCustomising,
         },
+        { type = "section", name = L["TALKING_HEAD_CONTENT_PREVIEW"] or "Content Preview", visibleWhen = isCustomising },
         { type = "talkingHeadPreview", visibleWhen = isCustomising },
     },
 }
