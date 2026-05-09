@@ -113,6 +113,11 @@ Insight.CINEMATIC_BACKDROP = {
     insets   = { left = 0, right = 0, top = 0, bottom = 0 },
 }
 
+local LIVE_TOOLTIP_PAD_X    = 28
+local LIVE_TOOLTIP_PAD_Y    = 22
+local LIVE_TOOLTIP_LINE_GAP = 2
+local LIVE_TOOLTIP_MAX_WIDTH = 560
+
 -- ============================================================================
 -- SHARED HELPERS
 -- ============================================================================
@@ -354,6 +359,63 @@ function Insight.ApplyBackdrop(tooltip)
     tooltip:SetBackdropBorderColor(Insight.PANEL_BORDER[1], Insight.PANEL_BORDER[2], Insight.PANEL_BORDER[3], Insight.PANEL_BORDER[4])
 end
 
+function Insight.RefreshTooltipLayout(tooltip)
+    if not tooltip or not tooltip.GetName or not tooltip.SetWidth or not tooltip.SetHeight then return end
+    if tooltip._insightPreviewMock then return end
+    local tooltipType = tooltip._insightTooltipType
+    if tooltipType ~= "player" then return end
+
+    local maxWidth   = 0
+    local totalHeight = LIVE_TOOLTIP_PAD_Y
+    local shownLines = 0
+
+    Insight.ForTooltipLines(tooltip, function(_, left, right)
+        local lineWidth, lineHeight = 0, 0
+        local leftShown, rightShown = false, false
+        if left  then pcall(function() leftShown  = left:IsShown()  and true or false end) end
+        if right then pcall(function() rightShown = right:IsShown() and true or false end) end
+        if leftShown then
+            local lw, lh = 0, 0
+            pcall(function() lw = left:GetStringWidth()  or 0 end)
+            pcall(function() lh = left:GetStringHeight() or 0 end)
+            lineWidth  = lineWidth + lw
+            lineHeight = math.max(lineHeight, lh)
+        end
+        if rightShown then
+            local rw, rh = 0, 0
+            pcall(function() rw = right:GetStringWidth()  or 0 end)
+            pcall(function() rh = right:GetStringHeight() or 0 end)
+            lineWidth  = lineWidth + 12 + rw
+            lineHeight = math.max(lineHeight, rh)
+        end
+        if lineWidth > 0 or lineHeight > 0 then
+            maxWidth    = math.max(maxWidth, lineWidth)
+            totalHeight = totalHeight + math.max(lineHeight, 1) + LIVE_TOOLTIP_LINE_GAP
+            shownLines  = shownLines + 1
+        end
+    end)
+
+    if shownLines == 0 then return end
+
+    local width  = math.min(LIVE_TOOLTIP_MAX_WIDTH, math.ceil(maxWidth + LIVE_TOOLTIP_PAD_X))
+    local height = math.ceil(totalHeight)
+
+    if tooltip.SetMinimumWidth then
+        pcall(tooltip.SetMinimumWidth, tooltip, 0)
+        pcall(tooltip.SetMinimumWidth, tooltip, width)
+    end
+    tooltip:SetWidth(width)
+    tooltip:SetHeight(height)
+end
+
+function Insight.RefreshTooltipLayoutSoon(tooltip)
+    Insight.RefreshTooltipLayout(tooltip)
+    if not (C_Timer and C_Timer.After) then return end
+    C_Timer.After(0, function()
+        Insight.RefreshTooltipLayout(tooltip)
+    end)
+end
+
 local function StyleFonts(tooltip)
     if not tooltip then return end
     local S        = Insight.Scaled
@@ -390,6 +452,7 @@ local function StyleFonts(tooltip)
         if left  then left:SetFont(GetInsightFontPath(),  S(sz),      "OUTLINE") end
         if right then right:SetFont(GetInsightFontPath(), S(rightSz), "OUTLINE") end
     end)
+    Insight.RefreshTooltipLayoutSoon(tooltip)
 end
 
 function Insight.StyleFonts(tooltip)
@@ -399,6 +462,8 @@ end
 function Insight.StyleTooltipFull(tooltip)
     Insight.StripNineSlice(tooltip)
     Insight.ApplyBackdrop(tooltip)
+    StyleFonts(tooltip)
+    Insight.RefreshTooltipLayoutSoon(tooltip)
 end
 
 -- ============================================================================

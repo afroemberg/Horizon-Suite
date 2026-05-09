@@ -28,15 +28,46 @@ local function FormatNameSpan(plain, r, g, b, useGradient)
     return "|cff" .. hex .. plain .. "|r"
 end
 
+local function ShiftModifierActive()
+    return IsShiftKeyDown and IsShiftKeyDown()
+end
+
+local function GetInsightDisplayMode(modeKey, legacyKey)
+    local mode = addon.GetDB(modeKey, nil)
+    if mode == "force" or mode == "modifier" or mode == "hide" then return mode end
+    return addon.GetDB(legacyKey, false) and "force" or "hide"
+end
+
 local function ShowMount()            return addon.GetDB("insightShowMount",            true)  end
-local function ShowIlvl()             return addon.GetDB("insightShowIlvl",             true)  end
-local function ShowSpecRole()          return addon.GetDB("insightShowSpecRole",          true)  end
+local function ShowSpecRole()         return addon.GetDB("insightShowSpecRole",          true)  end
 local function ShowCharacterTitle()   return addon.GetDB("insightShowCharacterTitle",   true)  end
 local function ShowStatusBadges()     return addon.GetDB("insightShowStatusBadges",     true)  end
-local function ShowMythicScore()  return addon.GetDB("insightShowMythicScore",  true)  end
+local function ShowStatusBadgeCombat()    return addon.GetDB("insightStatusBadgeCombat",    true) end
+local function ShowStatusBadgeAFK()       return addon.GetDB("insightStatusBadgeAFK",        true) end
+local function ShowStatusBadgeDND()       return addon.GetDB("insightStatusBadgeDND",        true) end
+local function ShowStatusBadgePVP()       return addon.GetDB("insightStatusBadgePVP",        true) end
+local function ShowStatusBadgeGroup()     return addon.GetDB("insightStatusBadgeGroup",      true) end
+local function ShowStatusBadgeFriend()    return addon.GetDB("insightStatusBadgeFriend",     true) end
+local function ShowStatusBadgeTargeting() return addon.GetDB("insightStatusBadgeTargeting",  true) end
+local function ShowMythicScore()
+    local mode = GetInsightDisplayMode("insightMythicScoreMode", "insightShowMythicScore")
+    if mode == "hide" then return false end
+    return mode == "force" or (mode == "modifier" and ShiftModifierActive())
+end
 local function ShowGuildRank()    return addon.GetDB("insightShowGuildRank",    true)  end
-local function ShowHonorLevel()  return addon.GetDB("insightShowHonorLevel",   true)  end
-local function ShowIcons()       return addon.GetDB("insightShowIcons",       true)  end
+local function ShowIcons()        return addon.GetDB("insightShowIcons",        true)  end
+
+local function ShowIlvl()
+    local mode = GetInsightDisplayMode("insightItemLevelMode", "insightShowIlvl")
+    if mode == "hide" then return false end
+    return mode == "force" or (mode == "modifier" and ShiftModifierActive())
+end
+
+local function ShowHonorLevel()
+    local mode = GetInsightDisplayMode("insightHonorLevelMode", "insightShowHonorLevel")
+    if mode == "hide" then return false end
+    return mode == "force" or (mode == "modifier" and ShiftModifierActive())
+end
 
 -- ============================================================================
 -- INSPECT CACHE
@@ -386,36 +417,28 @@ function Insight.AddStatusBadgesBlock(tooltip, unit)
     if not ShowStatusBadges() then return end
     local badges = {}
     pcall(function()
-        if UnitAffectingCombat(unit) then badges[#badges + 1] = "|cffff4444[Combat]|r"      end
-        if UnitIsAFK(unit)           then badges[#badges + 1] = "|cffffff55[AFK]|r"         end
-        if UnitIsDND(unit)           then badges[#badges + 1] = "|cffaaaaaa[DND]|r"         end
-        if UnitIsPVP(unit)           then badges[#badges + 1] = "|cffff8c00[PvP]|r"         end
-        if UnitInRaid(unit)          then badges[#badges + 1] = "|cff88ddff[Raid]|r"
-        elseif UnitInParty(unit)     then badges[#badges + 1] = "|cff88ddff[Party]|r"       end
-        if C_FriendList and C_FriendList.IsFriend then
+        if ShowStatusBadgeCombat() and UnitAffectingCombat(unit) then badges[#badges + 1] = "|cffff4444[Combat]|r"    end
+        if ShowStatusBadgeAFK()    and UnitIsAFK(unit)           then badges[#badges + 1] = "|cffffff55[AFK]|r"       end
+        if ShowStatusBadgeDND()    and UnitIsDND(unit)           then badges[#badges + 1] = "|cffaaaaaa[DND]|r"       end
+        if ShowStatusBadgePVP()    and UnitIsPVP(unit)           then badges[#badges + 1] = "|cffff8c00[PvP]|r"       end
+        if ShowStatusBadgeGroup() then
+            if UnitInRaid(unit)        then badges[#badges + 1] = "|cff88ddff[Raid]|r"
+            elseif UnitInParty(unit)   then badges[#badges + 1] = "|cff88ddff[Party]|r" end
+        end
+        if ShowStatusBadgeFriend() and C_FriendList and C_FriendList.IsFriend then
             local isFriend = false
             pcall(function()
                 local g = UnitGUID(unit)
-                if C_FriendList.IsFriend(g) then
-                    isFriend = true
-                else
-                    isFriend = false
-                end
+                if C_FriendList.IsFriend(g) then isFriend = true else isFriend = false end
             end)
-            if isFriend then
-                badges[#badges + 1] = "|cff55ff55[Friend]|r"
-            end
+            if isFriend then badges[#badges + 1] = "|cff55ff55[Friend]|r" end
         end
-        local targetingYou = false
-        pcall(function()
-            if UnitIsUnit("mouseoverTarget", "player") then
-                targetingYou = true
-            else
-                targetingYou = false
-            end
-        end)
-        if targetingYou then
-            badges[#badges + 1] = "|cffff4466[Targeting You]|r"
+        if ShowStatusBadgeTargeting() then
+            local targetingYou = false
+            pcall(function()
+                if UnitIsUnit("mouseoverTarget", "player") then targetingYou = true else targetingYou = false end
+            end)
+            if targetingYou then badges[#badges + 1] = "|cffff4466[Targeting You]|r" end
         end
     end)
     if #badges > 0 then
@@ -731,7 +754,19 @@ function Insight.RenderTestTooltipContent(tooltip)
 
     -- 4. Status badges (AddStatusBadgesBlock)
     if ShowStatusBadges() then
-        tooltip:AddLine("|cffff4444[Combat]|r  |cffff8c00[PvP]|r  |cff88ddff[Party]|r  |cff55ff55[Friend]|r  |cffff4466[Targeting You]|r", 1, 1, 1)
+        local previewBadges = {}
+        if ShowStatusBadgeCombat()    then previewBadges[#previewBadges + 1] = "|cffff4444[Combat]|r"       end
+        if ShowStatusBadgePVP()       then previewBadges[#previewBadges + 1] = "|cffff8c00[PvP]|r"         end
+        if ShowStatusBadgeGroup()     then previewBadges[#previewBadges + 1] = "|cff88ddff[Party]|r"       end
+        if ShowStatusBadgeFriend()    then previewBadges[#previewBadges + 1] = "|cff55ff55[Friend]|r"      end
+        if ShowStatusBadgeTargeting() then previewBadges[#previewBadges + 1] = "|cffff4466[Targeting You]|r" end
+        if ShowStatusBadgeAFK()       then previewBadges[#previewBadges + 1] = "|cffffff55[AFK]|r"         end
+        if ShowStatusBadgeDND()       then previewBadges[#previewBadges + 1] = "|cffaaaaaa[DND]|r"         end
+        if #previewBadges > 0 then
+            Insight.TagLines(tooltip, "badges", function()
+                tooltip:AddLine(table.concat(previewBadges, "  "), 1, 1, 1)
+            end)
+        end
     end
 
     -- 5. Honor (PvP block — separator only when honor will show, like PvPHasContent)
