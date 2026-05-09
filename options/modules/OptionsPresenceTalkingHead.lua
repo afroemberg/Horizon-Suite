@@ -18,6 +18,8 @@ local function updateTalkingHead()
     end
 end
 
+local function isCustomising() return getDB("talkingHeadCustomise", D.talkingHeadCustomise) end
+
 local FONT_USE_GLOBAL = "__global__"
 
 local function GetFontOptions(dbKey)
@@ -62,7 +64,20 @@ local category = {
             get   = function() return getDB("talkingHeadMuteVoice", D.talkingHeadMuteVoice) end,
             set   = function(value) setDB("talkingHeadMuteVoice", value) end,
         },
-        { type = "section", name = L["TALKING_HEAD_FRAME_CONTENT"] or "Content" },
+        {
+            type  = "toggle",
+            name  = L["TALKING_HEAD_CUSTOMISE"] or "Customise Appearance",
+            desc  = L["TALKING_HEAD_CUSTOMISE_DESC"] or "Override fonts, colours, portrait visibility, and frame scale.",
+            dbKey = "talkingHeadCustomise",
+            get   = function() return getDB("talkingHeadCustomise", D.talkingHeadCustomise) end,
+            set   = function(v) setDB("talkingHeadCustomise", v); updateTalkingHead() end,
+            refreshIds = {
+                "talkingHeadNameFontPath", "talkingHeadNameSize", "talkingHeadNameOutline", "talkingHeadNameColor",
+                "talkingHeadTextFontPath", "talkingHeadTextSize", "talkingHeadTextOutline", "talkingHeadShowPortrait",
+                "talkingHeadShowPortraitBorder", "talkingHeadBackground", "talkingHeadCloseButton", "talkingHeadScale",
+                "talkingHeadPreview",
+            },
+        },
         {
             type              = "dropdown",
             name              = L["TALKING_HEAD_NAME_FONT"] or "Name Font",
@@ -75,6 +90,7 @@ local category = {
             refreshIds        = { "talkingHeadPreview" },
             displayFn         = DisplayFont,
             fontPreviewInList = true,
+            visibleWhen       = isCustomising,
         },
         {
             type  = "slider",
@@ -86,6 +102,7 @@ local category = {
             get        = function() return math.max(10, math.min(24, tonumber(getDB("talkingHeadNameSize", D.talkingHeadNameSize)) or D.talkingHeadNameSize)) end,
             set        = function(v) setDB("talkingHeadNameSize", math.max(10, math.min(24, v))); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
+            visibleWhen = isCustomising,
         },
         {
             type  = "toggle",
@@ -95,6 +112,7 @@ local category = {
             get        = function() return getDB("talkingHeadNameOutline", D.talkingHeadNameOutline) end,
             set        = function(v) setDB("talkingHeadNameOutline", v); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
+            visibleWhen = isCustomising,
         },
         {
             type    = "color",
@@ -105,6 +123,7 @@ local category = {
             get        = function() return getDB("talkingHeadNameColorR", D.talkingHeadNameColorR), getDB("talkingHeadNameColorG", D.talkingHeadNameColorG), getDB("talkingHeadNameColorB", D.talkingHeadNameColorB) end,
             set        = function(r, g, b) setDB("talkingHeadNameColorR", r); setDB("talkingHeadNameColorG", g); setDB("talkingHeadNameColorB", b); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
+            visibleWhen = isCustomising,
         },
         {
             type              = "dropdown",
@@ -118,6 +137,7 @@ local category = {
             refreshIds        = { "talkingHeadPreview" },
             displayFn         = DisplayFont,
             fontPreviewInList = true,
+            visibleWhen       = isCustomising,
         },
         {
             type  = "slider",
@@ -129,6 +149,7 @@ local category = {
             get        = function() return math.max(10, math.min(20, tonumber(getDB("talkingHeadTextSize", D.talkingHeadTextSize)) or D.talkingHeadTextSize)) end,
             set        = function(v) setDB("talkingHeadTextSize", math.max(10, math.min(20, v))); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
+            visibleWhen = isCustomising,
         },
         {
             type  = "toggle",
@@ -138,6 +159,7 @@ local category = {
             get        = function() return getDB("talkingHeadTextOutline", D.talkingHeadTextOutline) end,
             set        = function(v) setDB("talkingHeadTextOutline", v); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
+            visibleWhen = isCustomising,
         },
         {
             type  = "toggle",
@@ -146,9 +168,19 @@ local category = {
             dbKey = "talkingHeadShowPortrait",
             get        = function() return getDB("talkingHeadShowPortrait", D.talkingHeadShowPortrait) end,
             set        = function(value) setDB("talkingHeadShowPortrait", value); updateTalkingHead() end,
-            refreshIds = { "talkingHeadPreview" },
+            refreshIds = { "talkingHeadShowPortraitBorder", "talkingHeadPreview" },
+            visibleWhen = isCustomising,
         },
-        { type = "section", name = L["TALKING_HEAD_FRAME"] or "Frame" },
+        {
+            type  = "toggle",
+            name  = L["TALKING_HEAD_SHOW_PORTRAIT_BORDER"] or "Show Portrait Border",
+            desc  = L["TALKING_HEAD_SHOW_PORTRAIT_BORDER_DESC"] or "Show the decorative ring around the NPC portrait. Has no effect when the portrait is hidden.",
+            dbKey = "talkingHeadShowPortraitBorder",
+            get        = function() return getDB("talkingHeadShowPortraitBorder", D.talkingHeadShowPortraitBorder) end,
+            set        = function(value) setDB("talkingHeadShowPortraitBorder", value); updateTalkingHead() end,
+            refreshIds = { "talkingHeadPreview" },
+            visibleWhen = function() return isCustomising() and getDB("talkingHeadShowPortrait", D.talkingHeadShowPortrait) end,
+        },
         {
             type  = "toggle",
             name  = L["TALKING_HEAD_SHOW_BG"] or "Show Background",
@@ -156,6 +188,7 @@ local category = {
             dbKey = "talkingHeadBackground",
             get   = function() return getDB("talkingHeadBackground", D.talkingHeadBackground) end,
             set   = function(value) setDB("talkingHeadBackground", value); updateTalkingHead() end,
+            visibleWhen = isCustomising,
         },
         {
             type  = "toggle",
@@ -164,6 +197,7 @@ local category = {
             dbKey = "talkingHeadCloseButton",
             get   = function() return getDB("talkingHeadCloseButton", D.talkingHeadCloseButton) end,
             set   = function(value) setDB("talkingHeadCloseButton", value); updateTalkingHead() end,
+            visibleWhen = isCustomising,
         },
         {
             type  = "slider",
@@ -173,11 +207,11 @@ local category = {
             min   = 0.5,
             max   = 2.0,
             step  = 0.1,
-            get   = function() return math.max(0.5, math.min(2.0, tonumber(getDB("talkingHeadScale", D.talkingHeadScale)) or D.talkingHeadScale)) end,
-            set   = function(v) setDB("talkingHeadScale", math.max(0.5, math.min(2.0, v))); updateTalkingHead() end,
+            get         = function() return math.max(0.5, math.min(2.0, tonumber(getDB("talkingHeadScale", D.talkingHeadScale)) or D.talkingHeadScale)) end,
+            set         = function(v) setDB("talkingHeadScale", math.max(0.5, math.min(2.0, v))); updateTalkingHead() end,
+            visibleWhen = isCustomising,
         },
-        { type = "section", name = L["TALKING_HEAD_CONTENT_PREVIEW"] or "Content Preview" },
-        { type = "talkingHeadPreview" },
+        { type = "talkingHeadPreview", visibleWhen = isCustomising },
     },
 }
 
