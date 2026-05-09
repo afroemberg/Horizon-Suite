@@ -8,19 +8,21 @@ addon.Presence = addon.Presence or {}
 -- ============================================================================
 
 local DEFAULTS = {
-    talkingHeadEnabled      = true,
-    talkingHeadShowPortrait = true,
-    talkingHeadBackground   = false,
-    talkingHeadCloseButton  = false,
-    talkingHeadMuteVoice    = false,
-    talkingHeadScale        = 1.0,
-    talkingHeadNameSize     = 16,
-    talkingHeadNameOutline  = true,
-    talkingHeadNameColorR   = 0.55,
-    talkingHeadNameColorG   = 0.65,
-    talkingHeadNameColorB   = 0.75,
-    talkingHeadTextSize     = 14,
-    talkingHeadTextOutline  = true,
+    talkingHeadEnabled            = true,
+    talkingHeadCustomise          = true,
+    talkingHeadShowPortrait       = true,
+    talkingHeadShowPortraitBorder = true,
+    talkingHeadBackground         = false,
+    talkingHeadCloseButton        = false,
+    talkingHeadMuteVoice          = false,
+    talkingHeadScale              = 1.0,
+    talkingHeadNameSize           = 16,
+    talkingHeadNameOutline        = true,
+    talkingHeadNameColorR         = 0.55,
+    talkingHeadNameColorG         = 0.65,
+    talkingHeadNameColorB         = 0.75,
+    talkingHeadTextSize           = 14,
+    talkingHeadTextOutline        = true,
 }
 addon.Presence.TalkingHeadDefaults = DEFAULTS
 
@@ -87,6 +89,7 @@ end
 -- Custom fonts, sizes, and name colour on top of Blizzard's frame
 local function ApplyTalkingHeadContent(frame)
     if not frame then return end
+    if not GetOption("talkingHeadCustomise", DEFAULTS.talkingHeadCustomise) then return end
 
     local textFont    = FontPath("talkingHeadTextFontPath")
     local textSize    = tonumber(GetOption("talkingHeadTextSize",    DEFAULTS.talkingHeadTextSize))    or DEFAULTS.talkingHeadTextSize
@@ -115,14 +118,34 @@ local function ApplyTalkingHeadContent(frame)
     end
 end
 
--- Frame-level toggles: portrait, background, close button, scale
+-- Frame-level toggles: portrait, background, close button, scale.
+-- When customise is off, Blizzard defaults are restored (portrait on, background off, scale 1).
 local function ApplyTalkingHeadFrame(frame)
     if not frame then return end
+
+    if not GetOption("talkingHeadCustomise", DEFAULTS.talkingHeadCustomise) then
+        if frame.MainFrame then
+            frame.MainFrame:SetShown(true)
+            frame.MainFrame:SetAlpha(1)
+        end
+        if frame.PortraitFrame then
+            frame.PortraitFrame:SetShown(true)
+            frame.PortraitFrame:SetAlpha(1)
+        end
+        if frame.BackgroundFrame then
+            frame.BackgroundFrame:SetAlpha(0)
+        end
+        frame:SetScale(1.0)
+        return
+    end
+
     local showPortrait = GetOption("talkingHeadShowPortrait", DEFAULTS.talkingHeadShowPortrait)
-    -- MainFrame (model) and PortraitFrame (decorative border ring, a sibling of MainFrame
-    -- at TalkingHeadFrame level) are toggled together. Both SetShown and SetAlpha are used:
+    -- PortraitFrame is the decorative border ring, a sibling of MainFrame at TalkingHeadFrame
+    -- level. It is independent of the model — hidden when portrait is off, or when portrait
+    -- is on but the user has opted to hide the border. Both SetShown and SetAlpha are used:
     -- SetShown removes the frame from rendering; SetAlpha(0) guards against Blizzard's
     -- animation scripts calling Show() on the frame between our hooks.
+    local showBorder = showPortrait and GetOption("talkingHeadShowPortraitBorder", DEFAULTS.talkingHeadShowPortraitBorder)
     if frame.MainFrame then
         frame.MainFrame:SetShown(showPortrait)
         frame.MainFrame:SetAlpha(showPortrait and 1 or 0)
@@ -133,8 +156,8 @@ local function ApplyTalkingHeadFrame(frame)
         end
     end
     if frame.PortraitFrame then
-        frame.PortraitFrame:SetShown(showPortrait)
-        frame.PortraitFrame:SetAlpha(showPortrait and 1 or 0)
+        frame.PortraitFrame:SetShown(showBorder)
+        frame.PortraitFrame:SetAlpha(showBorder and 1 or 0)
     end
     if frame.BackgroundFrame then
         frame.BackgroundFrame:SetAlpha(GetOption("talkingHeadBackground", DEFAULTS.talkingHeadBackground) and 1 or 0)
@@ -193,6 +216,7 @@ local function InstallHooks(frame)
     end)
     if frame.NameFrame and frame.NameFrame.Name then
         LockDirectFont(frame.NameFrame.Name, function()
+            if not GetOption("talkingHeadCustomise", DEFAULTS.talkingHeadCustomise) then return end
             return FontPath("talkingHeadNameFontPath"),
                    tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize,
                    GetOption("talkingHeadNameOutline", DEFAULTS.talkingHeadNameOutline) and "OUTLINE" or ""
@@ -200,6 +224,7 @@ local function InstallHooks(frame)
     end
     if frame.TextFrame and frame.TextFrame.Text then
         LockDirectFont(frame.TextFrame.Text, function()
+            if not GetOption("talkingHeadCustomise", DEFAULTS.talkingHeadCustomise) then return end
             return FontPath("talkingHeadTextFontPath"),
                    tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize,
                    GetOption("talkingHeadTextOutline", DEFAULTS.talkingHeadTextOutline) and "OUTLINE" or ""
