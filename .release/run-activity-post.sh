@@ -101,8 +101,51 @@ trim() {
   fi
 }
 
+# Strips a leading "## Summary" heading and any subsequent "## " section, so
+# the description in Discord is just the first prose paragraph rather than a
+# full markdown PR template. Falls back to the raw body if no headings exist.
+clean_pr_body() {
+  local body="$1"
+  if [ -z "$body" ]; then
+    printf ''
+    return
+  fi
+  # Drop the leading "## Summary" line (case-insensitive) plus any blank lines
+  # immediately after it, then cut off at the next "## " heading.
+  printf '%s' "$body" | awk '
+    BEGIN { stripping_summary = 0; saw_first_line = 0 }
+    !saw_first_line && /^[[:space:]]*##[[:space:]]+[Ss]ummary[[:space:]]*$/ {
+      stripping_summary = 1
+      saw_first_line = 1
+      next
+    }
+    stripping_summary && /^[[:space:]]*$/ { next }
+    /^##[[:space:]]/ && saw_first_line { exit }
+    { saw_first_line = 1; stripping_summary = 0; print }
+  ' | sed -E ':a;/^[[:space:]]*$/{$d;N;ba;}'
+}
+
+# Picks an embed color for a non-draft PR based on diff size. Small PRs get
+# the existing "opened blue" so nothing changes for routine work; medium
+# turns blue→teal, large turns orange, huge turns red. Drafts override this.
+color_for_pr_size() {
+  local changes="${1:-0}"
+  if [ "$changes" -ge 1000 ]; then
+    printf '%s' "$COLOR_PR_HUGE"
+  elif [ "$changes" -ge 250 ]; then
+    printf '%s' "$COLOR_PR_LARGE"
+  elif [ "$changes" -ge 50 ]; then
+    printf '%s' "$COLOR_PR_MEDIUM"
+  else
+    printf '%s' "$COLOR_OPENED"
+  fi
+}
+
 # --- Color palette (decimal) ---
-COLOR_OPENED=3447003          # blue
+COLOR_OPENED=3447003          # blue (small PRs)
+COLOR_PR_MEDIUM=1752220       # teal (50–249 changes)
+COLOR_PR_LARGE=15105570       # orange (250–999 changes)
+COLOR_PR_HUGE=15548997        # red (1000+ changes)
 COLOR_DRAFT=9807270           # slate gray
 COLOR_CLOSED_DONE=5763719     # green (completed)
 COLOR_CLOSED_DROP=9807270     # gray (not_planned / unmerged)
@@ -189,29 +232,93 @@ case "$EVENT_NAME" in
     mapfile -t ASSIGNEES < <(jq -r '.pull_request.assignees[].login' "$EVENT_PATH")
     case "$ACTION" in
       opened)
+        # Auto-assigned reviewers (added by another workflow's GITHUB_TOKEN)
+        # don't appear in this event's snapshot — and they don't fire a
+        # follow-up `review_requested` event either, because GitHub suppresses
+        # event recursion from GITHUB_TOKEN-driven actions. Sleep briefly to
+        # let any auto-assign workflow land, then refetch the live PR state
+        # so reviewers + diff stats + labels reflect the actual current PR.
+        sleep 8
+        LIVE_PR=$(gh api "repos/${REPO}/pulls/${NUMBER}" 2>/dev/null || echo "")
+        ADDS=0; DELS=0; FILES=0; LABELS_CHIPS=""
+        if [ -n "$LIVE_PR" ] && echo "$LIVE_PR" | jq -e . >/dev/null 2>&1; then
+          mapfile -t ASSIGNEES < <(echo "$LIVE_PR" | jq -r '.assignees[]?.login // empty')
+          mapfile -t REVIEWERS < <(echo "$LIVE_PR" | jq -r '.requested_reviewers[]?.login // empty')
+          ADDS=$(echo "$LIVE_PR"  | jq -r '.additions    // 0')
+          DELS=$(echo "$LIVE_PR"  | jq -r '.deletions    // 0')
+          FILES=$(echo "$LIVE_PR" | jq -r '.changed_files // 0')
+          LABELS_CHIPS=$(echo "$LIVE_PR" | jq -r '[.labels[]?.name] | map("`" + . + "`") | join(" ")')
+        else
+          REVIEWERS=()
+        fi
+        CHANGES=$((ADDS + DELS))
+
         if [ "$DRAFT" = "true" ]; then
           TITLE="📝 PR #${NUMBER} opened (draft) — $(trim "$PTITLE" 200)"
           COLOR=$COLOR_DRAFT
         else
           TITLE="🚀 PR #${NUMBER} opened — $(trim "$PTITLE" 200)"
-          COLOR=$COLOR_OPENED
+          COLOR=$(color_for_pr_size "$CHANGES")
         fi
-        # Build the assignee line. Pings only fire on opened, and only for
-        # assignees who aren't the author (skip self-pings).
-        if [ "${#ASSIGNEES[@]}" -gt 0 ]; then
-          ASSIGNEE_LINE=$(mentions_for_logins "$AUTHOR_LOGIN" "${ASSIGNEES[@]}")
-          if [ -n "$ASSIGNEE_LINE" ]; then
-            CONTENT="$ASSIGNEE_LINE"
-            DESCRIPTION="**Assigned:** ${ASSIGNEE_LINE}"
-          else
-            DESCRIPTION="**Assigned:** _self-assigned to author_"
-          fi
-        else
-          DESCRIPTION="**Assigned:** _unassigned_"
+
+        # Resolve mention strings for the embed fields. Pings only fire on
+        # opened, and only for users who aren't the PR author (skip self-pings).
+        ASSIGNEE_LINE=""
+        [ "${#ASSIGNEES[@]}" -gt 0 ] && ASSIGNEE_LINE=$(mentions_for_logins "$AUTHOR_LOGIN" "${ASSIGNEES[@]}")
+        REVIEWER_LINE=""
+        [ "${#REVIEWERS[@]}" -gt 0 ] && REVIEWER_LINE=$(mentions_for_logins "$AUTHOR_LOGIN" "${REVIEWERS[@]}")
+
+        # Description: just the cleaned body excerpt. Roles/branch/stats live
+        # in fields below for a key/value grid layout instead of stacked text.
+        BODY_CLEAN=$(clean_pr_body "$BODY")
+        DESCRIPTION=$(trim "$BODY_CLEAN" 400)
+
+        # Build the inline-fields grid. Order matters: people first
+        # (Reviewers, then Assigned if any), then context (Branch, Changes).
+        FIELDS_JSON='[]'
+        push_field() {  # name, value, inline (true|false)
+          FIELDS_JSON=$(jq -n \
+            --argjson arr "$FIELDS_JSON" \
+            --arg name "$1" --arg value "$2" \
+            --argjson inline "${3:-true}" \
+            '$arr + [{name: $name, value: $value, inline: $inline}]')
+        }
+        if [ -n "$REVIEWER_LINE" ]; then
+          push_field "Reviewers" "$REVIEWER_LINE" true
+        elif [ "${#REVIEWERS[@]}" -gt 0 ]; then
+          push_field "Reviewers" "_author requested own review_" true
         fi
-        DESCRIPTION="${DESCRIPTION}"$'\n'"**Branch:** \`${HEAD}\` → \`${BASE}\`"
-        BODY_TRIM=$(trim "$BODY" 500)
-        [ -n "$BODY_TRIM" ] && DESCRIPTION="${DESCRIPTION}"$'\n\n'"${BODY_TRIM}"
+        # Skip the Assigned line entirely when nobody's assigned — most PRs
+        # in this repo use reviewers, not assignees, so an empty "_unassigned_"
+        # field is just noise.
+        if [ -n "$ASSIGNEE_LINE" ]; then
+          push_field "Assigned" "$ASSIGNEE_LINE" true
+        elif [ "${#ASSIGNEES[@]}" -gt 0 ]; then
+          push_field "Assigned" "_self-assigned to author_" true
+        fi
+        push_field "Branch" "\`${HEAD}\` → \`${BASE}\`" true
+        if [ "$FILES" -gt 0 ]; then
+          file_word="files"
+          [ "$FILES" -eq 1 ] && file_word="file"
+          push_field "Changes" "+${ADDS} / −${DELS} · ${FILES} ${file_word}" true
+        fi
+        # Labels render as backticked chips on a final non-inline row.
+        if [ -n "$LABELS_CHIPS" ]; then
+          push_field "Labels" "$LABELS_CHIPS" false
+        fi
+        EMBED_FIELDS="$FIELDS_JSON"
+
+        # Single ping line covers everyone we want to notify — assignees and
+        # reviewers, deduped so a user in both roles only pings once.
+        PING_PARTS=""
+        [ -n "$ASSIGNEE_LINE" ] && PING_PARTS="$ASSIGNEE_LINE"
+        if [ -n "$REVIEWER_LINE" ]; then
+          PING_PARTS="${PING_PARTS:+$PING_PARTS }$REVIEWER_LINE"
+        fi
+        if [ -n "$PING_PARTS" ]; then
+          # shellcheck disable=SC2086 # word-splitting is intentional here
+          CONTENT=$(printf '%s\n' $PING_PARTS | awk '!seen[$0]++' | tr '\n' ' ' | sed 's/ $//')
+        fi
         ;;
       closed)
         MERGED=$(jq -r '.pull_request.merged // false' "$EVENT_PATH")
@@ -327,10 +434,11 @@ EMBED=$(jq -n \
   --arg author_icon "$AUTHOR_AVATAR" \
   --arg footer "${REPO}" \
   --arg ts "$TIMESTAMP" \
+  --argjson fields "${EMBED_FIELDS:-[]}" \
   '{
     title: $title,
     url: $url,
-    description: $desc,
+    description: (if $desc != "" then $desc else null end),
     color: $color,
     author: (
       if $author != "@" then
@@ -339,6 +447,7 @@ EMBED=$(jq -n \
          + (if $author_icon != "" then {icon_url: $author_icon} else {} end))
       else null end
     ),
+    fields: (if ($fields | length) > 0 then $fields else null end),
     footer: {text: $footer},
     timestamp: $ts
   } | with_entries(select(.value != null))')
