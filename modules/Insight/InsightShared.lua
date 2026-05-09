@@ -157,12 +157,7 @@ function Insight.FormatNumbersInString(str)
 end
 
 function Insight.MythicScoreColor(score)
-    if score >= 3000 then return 1.00, 0.50, 0.00
-    elseif score >= 2500 then return 0.85, 0.40, 1.00
-    elseif score >= 2000 then return 0.20, 0.75, 1.00
-    elseif score >= 1500 then return 0.40, 1.00, 0.40
-    else return 0.65, 0.65, 0.65
-    end
+    return 0.85, 0.40, 1.00
 end
 
 function Insight.easeOut(t) return 1 - (1 - t) * (1 - t) end

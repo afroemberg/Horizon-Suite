@@ -515,9 +515,9 @@ local PREVIEW_PAD_SIDE   = 10
 local PREVIEW_PAD_BOTTOM = 10
 local PREVIEW_LINE_GAP   = 2
 local PREVIEW_BASE_WIDTH = 260   -- player / global
-local PREVIEW_NPC_WIDTH  = 210   -- compact NPC sample (3 short lines)
-local PREVIEW_ITEM_WIDTH = 220   -- compact item sample (name + ilvl)
-local PREVIEW_MAX_WIDTH  = 420
+local PREVIEW_NPC_WIDTH  = 180   -- compact NPC sample (3 short lines)
+local PREVIEW_ITEM_WIDTH = 195   -- compact item sample (name + ilvl)
+local PREVIEW_MAX_WIDTH  = 460
 
 local pulloutMock = nil
 
@@ -619,9 +619,12 @@ local function GetPreviewPulloutWidth()
         baseWidth = PREVIEW_BASE_WIDTH
         fontSize  = GetPreviewFontSetting({ "insightHeaderSize", "insightBodySize", "insightBadgesSize", "insightStatsSize", "insightMountSize", "insightTransmogSize" }, Insight.HEADER_SIZE)
     end
-    -- Scale width proportionally to how much larger the font is than the default header size.
-    local extra = math.max(0, fontSize - Insight.HEADER_SIZE) * 20
-    return math.floor(math.min(PREVIEW_MAX_WIDTH, baseWidth + extra) + 0.5)
+    -- Scale compact NPC/item samples more gently so preview-only font choices do not make
+    -- short tooltips much wider than their live-game content.
+    local scalePerPoint = (mode == "npc" or mode == "item") and 10 or 20
+    local maxWidth = (mode == "npc" or mode == "item") and 300 or PREVIEW_MAX_WIDTH
+    local extra = math.max(0, fontSize - Insight.HEADER_SIZE) * scalePerPoint
+    return math.floor(math.min(maxWidth, baseWidth + extra) + 0.5)
 end
 
 local function RefreshPullout()

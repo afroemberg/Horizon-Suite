@@ -114,7 +114,7 @@ local function TrySeedSelfInspectCache(unit)
         local g = UnitGUID(unit)
         local specID = PlayerUtil and PlayerUtil.GetCurrentSpecID and PlayerUtil.GetCurrentSpecID()
         if not specID or specID <= 0 then return end
-        local _, specName, _, specIcon, _, role = GetSpecializationInfoByID(specID)
+        local _, specName, _, specIcon, role = GetSpecializationInfoByID(specID)
         local _, equipped = GetAverageItemLevel()
         if not specName then return end
         inspectCache[g] = {
@@ -130,7 +130,7 @@ end
 local function CacheInspect(guid, unit)
     local specID = GetInspectSpecialization(unit)
     if not specID or specID <= 0 then return end
-    local _, specName, _, specIcon, _, role = GetSpecializationInfoByID(specID)
+    local _, specName, _, specIcon, role = GetSpecializationInfoByID(specID)
     if not specName then return end
 
     local ilvl
@@ -785,10 +785,13 @@ function Insight.RenderTestTooltipContent(tooltip)
             end
         end
     end
-    -- Role always shown in preview regardless of the toggle (illustrates the feature).
-    local previewRc = Insight.ROLE_COLORS["TANK"]
-    local previewRoleHex = string.format("%02x%02x%02x", math.floor(previewRc[1] * 255), math.floor(previewRc[2] * 255), math.floor(previewRc[3] * 255))
-    tooltip:AddLine(classIconStr .. "Blood Death Knight  |cff" .. previewRoleHex .. "Tank|r", 0.77, 0.12, 0.23)
+    local previewRoleSuffix = ""
+    if ShowSpecRole() then
+        local previewRc = Insight.ROLE_COLORS["TANK"]
+        local previewRoleHex = string.format("%02x%02x%02x", math.floor(previewRc[1] * 255), math.floor(previewRc[2] * 255), math.floor(previewRc[3] * 255))
+        previewRoleSuffix = "  |cff" .. previewRoleHex .. "Tank|r"
+    end
+    tooltip:AddLine(classIconStr .. "Blood Death Knight" .. previewRoleSuffix, 0.77, 0.12, 0.23)
 
     -- 4. Status badges (AddStatusBadgesBlock)
     if ShowStatusBadges() then
@@ -809,7 +812,7 @@ function Insight.RenderTestTooltipContent(tooltip)
 
     -- 5. Honor (PvP block — separator only when honor will show, like PvPHasContent)
     if ShowHonorLevel() then
-        Insight.AddSectionSeparator(tooltip, testSepR, testSepG, testSepB)
+        Insight.AddSectionSeparator(tooltip)
         Insight.TagLines(tooltip, "stats", function()
             tooltip:AddLine("Honor Level " .. Insight.FormatNumberWithCommas(247), 0.85, 0.70, 1.00)
         end)
@@ -819,7 +822,7 @@ function Insight.RenderTestTooltipContent(tooltip)
     local hasStats = false
     local function ensureStatsSep()
         if not hasStats then
-            Insight.AddSectionSeparator(tooltip, testSepR, testSepG, testSepB)
+            Insight.AddSectionSeparator(tooltip)
             hasStats = true
         end
     end
@@ -838,7 +841,7 @@ function Insight.RenderTestTooltipContent(tooltip)
 
     -- 7. Mount block (mirrors AddMountBlock: source only when not collected; ownership from setting)
     if ShowMount() then
-        Insight.AddSectionSeparator(tooltip, testSepR, testSepG, testSepB)
+        Insight.AddSectionSeparator(tooltip)
         local mountIconStr = showIcons and "|TInterface\\Icons\\ability_mount_drake_proto:14:14:0:0|t " or ""
         local ownSuffix, ownTextLine = GetMountOwnershipDisplay(false)
         Insight.TagLines(tooltip, "mount", function()
