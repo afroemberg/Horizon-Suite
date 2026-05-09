@@ -570,6 +570,7 @@ local function CreateMockTooltipFrame(parent)
     function mock:Layout(explicitWidth)
         local w = explicitWidth or self:GetWidth()
         if w <= 0 then w = 220 end
+        self:SetWidth(w)
         local innerW  = math.max(w - PREVIEW_PAD_SIDE * 2, 40)
         local yOffset = -PREVIEW_PAD_TOP
         for i = 1, self._lineCount do
@@ -589,6 +590,7 @@ local function CreateMockTooltipFrame(parent)
     return mock
 end
 
+-- Returns the raw (unscaled) DB font size — used only for width ratio calculations.
 local function GetPreviewFontSetting(keys, fallback)
     local size = tonumber(fallback) or Insight.BODY_SIZE
     if addon.GetDB then
@@ -596,21 +598,22 @@ local function GetPreviewFontSetting(keys, fallback)
             size = math.max(size, tonumber(addon.GetDB(key, size)) or size)
         end
     end
-    return Insight.Scaled(size)
+    return size
 end
 
 local function GetPreviewPulloutWidth()
     local mode = Insight.dashboardPreviewMode or "global"
+    -- NPC and item tooltips have concise, fixed content — use base width.
+    if mode == "npc" or mode == "item" then
+        return PREVIEW_BASE_WIDTH
+    end
     local fontSize
-    if mode == "npc" then
-        fontSize = GetPreviewFontSetting({ "insightNpcHeaderSize", "insightNpcBodySize" }, Insight.HEADER_SIZE)
-    elseif mode == "item" then
-        fontSize = GetPreviewFontSetting({ "insightItemHeaderSize", "insightItemBodySize", "insightItemTransmogSize" }, Insight.HEADER_SIZE)
-    elseif mode == "player" then
+    if mode == "player" then
         fontSize = GetPreviewFontSetting({ "insightPlayerHeaderSize", "insightPlayerBodySize", "insightPlayerBadgesSize", "insightPlayerStatsSize", "insightPlayerMountSize" }, Insight.HEADER_SIZE)
     else
         fontSize = GetPreviewFontSetting({ "insightHeaderSize", "insightBodySize", "insightBadgesSize", "insightStatsSize", "insightMountSize", "insightTransmogSize" }, Insight.HEADER_SIZE)
     end
+    -- Scale width proportionally to how much larger the font is than the default header size.
     local extra = math.max(0, fontSize - Insight.HEADER_SIZE) * 20
     return math.floor(math.min(PREVIEW_MAX_WIDTH, PREVIEW_BASE_WIDTH + extra) + 0.5)
 end
@@ -620,6 +623,7 @@ local function RefreshPullout()
     pulloutMock:ClearLines()
     Insight.ApplyBackdrop(pulloutMock)
     local mode = Insight.dashboardPreviewMode or "global"
+    Insight.previewRendering = true
     if mode == "item" and Insight.RenderItemPreviewContent then
         Insight.RenderItemPreviewContent(pulloutMock)
     elseif mode == "npc" and Insight.RenderNpcPreviewContent then
@@ -629,6 +633,7 @@ local function RefreshPullout()
     else
         if Insight.RenderTestTooltipContent then Insight.RenderTestTooltipContent(pulloutMock) end
     end
+    Insight.previewRendering = nil
     pulloutMock._insightTooltipType = (mode == "player" or mode == "npc" or mode == "item") and mode or nil
     Insight.StyleFonts(pulloutMock)
     local br, bg, bb, ba = 0.77, 0.12, 0.23, 0.60
@@ -763,7 +768,6 @@ function Insight.Init()
                     pulloutMock:ClearAllPoints()
                 end
                 pulloutMock:SetPoint("TOPLEFT", host, "TOPLEFT", 10, -10)
-                pulloutMock:SetPoint("RIGHT", host, "RIGHT", -10, 0)
                 pulloutMock:SetHeight(300)
             end,
             refresh = function()

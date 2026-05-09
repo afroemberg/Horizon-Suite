@@ -470,7 +470,7 @@ end
 -- CLASS ICON (Default / RondoMedia / custom media via core/ClassIconMedia.lua)
 -- ============================================================================
 
-local VALID_INSIGHT_CLASS_ICON_SOURCE = { custom = true, default = true, rondomedia = true }
+local VALID_INSIGHT_CLASS_ICON_SOURCE = { custom = true, default = true, rondomedia = true, specoverride = true }
 
 --- Tooltip class icon pack: Horizon (custom), Blizzard default atlas, or RondoMedia.
 --- @return string "custom" | "default" | "rondomedia"

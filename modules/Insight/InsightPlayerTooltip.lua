@@ -52,7 +52,7 @@ local function ShowStatusBadgeTargeting() return addon.GetDB("insightStatusBadge
 local function ShowMythicScore()
     local mode = GetInsightDisplayMode("insightMythicScoreMode", "insightShowMythicScore")
     if mode == "hide" then return false end
-    return mode == "force" or (mode == "modifier" and ShiftModifierActive())
+    return mode == "force" or (mode == "modifier" and (Insight.previewRendering or ShiftModifierActive()))
 end
 local function ShowGuildRank()    return addon.GetDB("insightShowGuildRank",    true)  end
 local function ShowIcons()        return addon.GetDB("insightShowIcons",        true)  end
@@ -60,13 +60,13 @@ local function ShowIcons()        return addon.GetDB("insightShowIcons",        
 local function ShowIlvl()
     local mode = GetInsightDisplayMode("insightItemLevelMode", "insightShowIlvl")
     if mode == "hide" then return false end
-    return mode == "force" or (mode == "modifier" and ShiftModifierActive())
+    return mode == "force" or (mode == "modifier" and (Insight.previewRendering or ShiftModifierActive()))
 end
 
 local function ShowHonorLevel()
     local mode = GetInsightDisplayMode("insightHonorLevelMode", "insightShowHonorLevel")
     if mode == "hide" then return false end
-    return mode == "force" or (mode == "modifier" and ShiftModifierActive())
+    return mode == "force" or (mode == "modifier" and (Insight.previewRendering or ShiftModifierActive()))
 end
 
 -- ============================================================================
@@ -114,7 +114,7 @@ local function TrySeedSelfInspectCache(unit)
         local g = UnitGUID(unit)
         local specID = PlayerUtil and PlayerUtil.GetCurrentSpecID and PlayerUtil.GetCurrentSpecID()
         if not specID or specID <= 0 then return end
-        local _, specName, _, specIcon, role = GetSpecializationInfoByID(specID)
+        local _, specName, _, specIcon, _, role = GetSpecializationInfoByID(specID)
         local _, equipped = GetAverageItemLevel()
         if not specName then return end
         inspectCache[g] = {
@@ -130,7 +130,7 @@ end
 local function CacheInspect(guid, unit)
     local specID = GetInspectSpecialization(unit)
     if not specID or specID <= 0 then return end
-    local _, specName, _, specIcon, role = GetSpecializationInfoByID(specID)
+    local _, specName, _, specIcon, _, role = GetSpecializationInfoByID(specID)
     if not specName then return end
 
     local ilvl
@@ -486,7 +486,12 @@ function Insight.AddStatsBlock(tooltip, unit, cached, sepR, sepG, sepB)
                 isSelf = false
             end
         end)
-        if not isSelf and (ShowIlvl() or ShowSpecRole()) then
+        local needsInspect = ShowIlvl() or ShowSpecRole()
+        if not needsInspect then
+            local src = Insight.GetClassIconSource and Insight.GetClassIconSource() or "custom"
+            needsInspect = (src == "specoverride")
+        end
+        if not isSelf and needsInspect then
             RequestInspect(unit)
         end
     end
@@ -625,8 +630,8 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
     Insight.ForTooltipLines(tooltip, function(j, lineLeft, _lineRight)
         if j < 2 or not lineLeft then return end
         pcall(function()
-            local text = lineLeft:GetText()
-            if not text then return end
+            local text = Insight.SafeGetFontText(lineLeft)
+            if not text or text == "" then return end
 
             if text:find(" %(Player%)") then
                 text = text:gsub(" %(Player%)", "")
@@ -652,11 +657,22 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
                 local iconPrefix = ""
                 if ShowIcons() then
                     local lineIconPx = (addon.GetInsightClassIconDisplaySize and addon.GetInsightClassIconDisplaySize()) or 14
-                    local classIcon = Insight.GetClassIconTexture and Insight.GetClassIconTexture(classFile)
-                    if classIcon then
-                        iconPrefix = classIcon
-                    elseif ShowSpecRole() and cached and cached.specIcon then
-                        iconPrefix = "|T" .. cached.specIcon .. ":" .. lineIconPx .. ":" .. lineIconPx .. ":0:0|t "
+                    local source = Insight.GetClassIconSource and Insight.GetClassIconSource() or "custom"
+                    if source == "specoverride" then
+                        -- Prefer spec icon from inspect; fall back to class icon while waiting for data
+                        if cached and cached.specIcon then
+                            iconPrefix = "|T" .. cached.specIcon .. ":" .. lineIconPx .. ":" .. lineIconPx .. ":0:0|t "
+                        else
+                            local classIcon = Insight.GetClassIconTexture and Insight.GetClassIconTexture(classFile)
+                            if classIcon then iconPrefix = classIcon end
+                        end
+                    else
+                        local classIcon = Insight.GetClassIconTexture and Insight.GetClassIconTexture(classFile)
+                        if classIcon then
+                            iconPrefix = classIcon
+                        elseif ShowSpecRole() and cached and cached.specIcon then
+                            iconPrefix = "|T" .. cached.specIcon .. ":" .. lineIconPx .. ":" .. lineIconPx .. ":0:0|t "
+                        end
                     end
                 end
                 local roleSuffix = ""
@@ -741,16 +757,27 @@ function Insight.RenderTestTooltipContent(tooltip)
 
     tooltip:AddLine("Level 80 Human", 1, 0.82, 0)
 
-    local rc = Insight.ROLE_COLORS["TANK"]
-    local roleHex = string.format("%02x%02x%02x", math.floor(rc[1] * 255), math.floor(rc[2] * 255), math.floor(rc[3] * 255))
     local testIconPx = (addon.GetInsightClassIconDisplaySize and addon.GetInsightClassIconDisplaySize()) or 14
-    local classIconStr = (showIcons and Insight.GetClassIconTexture and Insight.GetClassIconTexture("DEATHKNIGHT")) or ""
-    if classIconStr == "" and showIcons then
-        classIconStr = "|TInterface\\Icons\\spell_deathknight_bloodpresence:" .. testIconPx .. ":" .. testIconPx .. ":0:0|t "
+    local classIconStr = ""
+    if showIcons then
+        local src = Insight.GetClassIconSource and Insight.GetClassIconSource() or "custom"
+        if src == "specoverride" then
+            -- Spec Override: show Blizzard's native Blood DK spec icon
+            classIconStr = "|TInterface\\Icons\\spell_deathknight_bloodpresence:" .. testIconPx .. ":" .. testIconPx .. ":0:0|t "
+        else
+            classIconStr = (Insight.GetClassIconTexture and Insight.GetClassIconTexture("DEATHKNIGHT")) or ""
+            if classIconStr == "" then
+                classIconStr = "|TInterface\\Icons\\spell_deathknight_bloodpresence:" .. testIconPx .. ":" .. testIconPx .. ":0:0|t "
+            end
+        end
     end
-    tooltip:AddLine(
-        classIconStr .. "Blood Death Knight  |cff" .. roleHex .. "Tank|r",
-        0.77, 0.12, 0.23)
+    local roleSuffix = ""
+    if ShowSpecRole() then
+        local rc = Insight.ROLE_COLORS["TANK"]
+        local roleHex = string.format("%02x%02x%02x", math.floor(rc[1] * 255), math.floor(rc[2] * 255), math.floor(rc[3] * 255))
+        roleSuffix = "  |cff" .. roleHex .. "Tank|r"
+    end
+    tooltip:AddLine(classIconStr .. "Blood Death Knight" .. roleSuffix, 0.77, 0.12, 0.23)
 
     -- 4. Status badges (AddStatusBadgesBlock)
     if ShowStatusBadges() then
@@ -772,7 +799,9 @@ function Insight.RenderTestTooltipContent(tooltip)
     -- 5. Honor (PvP block — separator only when honor will show, like PvPHasContent)
     if ShowHonorLevel() then
         Insight.AddSectionSeparator(tooltip, testSepR, testSepG, testSepB)
-        tooltip:AddLine("Honor Level " .. Insight.FormatNumberWithCommas(247), 0.85, 0.70, 1.00)
+        Insight.TagLines(tooltip, "stats", function()
+            tooltip:AddLine("Honor Level " .. Insight.FormatNumberWithCommas(247), 0.85, 0.70, 1.00)
+        end)
     end
 
     -- 6. Stats (M+ / ilvl — EnsureStatsSep pattern from AddStatsBlock)
@@ -785,11 +814,15 @@ function Insight.RenderTestTooltipContent(tooltip)
     end
     if ShowMythicScore() then
         ensureStatsSep()
-        tooltip:AddLine((showIcons and Insight.MYTHIC_ICON or "") .. "M+ Score: " .. Insight.FormatNumberWithCommas(2847), Insight.MythicScoreColor(2847))
+        Insight.TagLines(tooltip, "stats", function()
+            tooltip:AddLine((showIcons and Insight.MYTHIC_ICON or "") .. "M+ Score: " .. Insight.FormatNumberWithCommas(2847), Insight.MythicScoreColor(2847))
+        end)
     end
     if ShowIlvl() then
         ensureStatsSep()
-        tooltip:AddLine("Item Level: " .. Insight.FormatNumberWithCommas(639), Insight.ILVL_COLOR[1], Insight.ILVL_COLOR[2], Insight.ILVL_COLOR[3])
+        Insight.TagLines(tooltip, "stats", function()
+            tooltip:AddLine("Item Level: " .. Insight.FormatNumberWithCommas(639), Insight.ILVL_COLOR[1], Insight.ILVL_COLOR[2], Insight.ILVL_COLOR[3])
+        end)
     end
 
     -- 7. Mount block (mirrors AddMountBlock: source only when not collected; ownership from setting)
@@ -797,14 +830,16 @@ function Insight.RenderTestTooltipContent(tooltip)
         Insight.AddSectionSeparator(tooltip, testSepR, testSepG, testSepB)
         local mountIconStr = showIcons and "|TInterface\\Icons\\ability_mount_drake_proto:14:14:0:0|t " or ""
         local ownSuffix, ownTextLine = GetMountOwnershipDisplay(false)
-        tooltip:AddLine(
-            mountIconStr .. "Reins of the Thundering Cobalt Cloud Serpent" .. (ownSuffix or ""),
-            Insight.MOUNT_COLOR[1], Insight.MOUNT_COLOR[2], Insight.MOUNT_COLOR[3])
-        -- Uncollected sample mount: source line shown; collected mounts omit source in live tooltips.
-        tooltip:AddLine("Drop: Sha of Anger", Insight.MOUNT_SRC_COLOR[1], Insight.MOUNT_SRC_COLOR[2], Insight.MOUNT_SRC_COLOR[3])
-        if ownTextLine then
-            tooltip:AddLine(ownTextLine, 1, 1, 1)
-        end
+        Insight.TagLines(tooltip, "mount", function()
+            tooltip:AddLine(
+                mountIconStr .. "Reins of the Thundering Cobalt Cloud Serpent" .. (ownSuffix or ""),
+                Insight.MOUNT_COLOR[1], Insight.MOUNT_COLOR[2], Insight.MOUNT_COLOR[3])
+            -- Uncollected sample mount: source line shown; collected mounts omit source in live tooltips.
+            tooltip:AddLine("Drop: Sha of Anger", Insight.MOUNT_SRC_COLOR[1], Insight.MOUNT_SRC_COLOR[2], Insight.MOUNT_SRC_COLOR[3])
+            if ownTextLine then
+                tooltip:AddLine(ownTextLine, 1, 1, 1)
+            end
+        end)
     end
 end
 
