@@ -1,6 +1,6 @@
 if GetLocale() ~= "koKR" then return end
 
-local addon = _G.HorizonSuite
+local addon = _G._HorizonSuite_Loading or _G.HorizonSuiteBeta or _G.HorizonSuite
 if not addon then return end
 
 local L = setmetatable({}, { __index = addon.L })
@@ -388,6 +388,8 @@ L["AXIS_GLOBAL_TOGGLES"]                                      = "Global Toggles"
 -- L["AXIS_GLOBAL_FONT_SECTION"]                              = "Global Font (Coming Soon!)"
 -- L["AXIS_GLOBAL_SCALE_SECTION"]                             = "Global Scale"
 -- L["AXIS_MINIMAP_ICON_SECTION"]                             = "Minimap Icon"
+-- L["AXIS_MINIMAP_ICON_CIRCULAR"]                            = "Circular icon"
+L["AXIS_MINIMAP_ICON_CIRCULAR_DESC"]                          = "Round the Horizon minimap icon and add a gold ring border to match calendar, clock, and other circular minimap buttons."
 -- L["AXIS_CLASS_THEME_SECTION"]                              = "Class Theme"
 -- L["AXIS_GLOBAL_CLASS_THEME"]                               = "Global Class Theme"
 -- L["AXIS_CLASS_THEME_DASHBOARD"]                            = "Dashboard"
@@ -998,6 +1000,11 @@ L["DASHBOARD_TYPO_OUTLINE"]                                   = "Dashboard text 
 L["DASHBOARD_TYPO_OUTLINE_DESC"]                              = "When on, dashboard UI text uses the standard outlined font style. Turn off for a softer, flat look."
 L["DASHBOARD_TYPO_SHADOW"]                                    = "Dashboard text shadow"
 L["DASHBOARD_TYPO_SHADOW_DESC"]                               = "Adds a subtle drop shadow behind dashboard text to improve readability on busy backgrounds."
+-- L["DASHBOARD_TYPO_HEADING_COLOR"]                          = "Heading Colour"
+-- L["DASHBOARD_TYPO_HEADING_COLOR_DESC"]                     = "Colour of the large headings on the Welcome and News tabs. Use a softer tone if pure white feels too bright on HDR displays."
+-- L["DASHBOARD_TYPO_HEADING_COLOR_WHITE"]                    = "White (default)"
+-- L["DASHBOARD_TYPO_HEADING_COLOR_CYAN"]                     = "Cyan (relaxed)"
+-- L["DASHBOARD_TYPO_HEADING_COLOR_GOLD"]                     = "Gold (relaxed)"
 L["FOCUS_BACKDROP_OPACITY"]                                   = "배경 투명도"
 L["FOCUS_PANEL_BACKGROUND_OPACITY"]                           = "패널 배경 투명도 (0–1)."
 L["FOCUS_BORDER"]                                             = "테두리 표시"
@@ -1667,7 +1674,7 @@ L["AFFIX_ICONS"]                                              = "Affix icons"
 L["AFFIX_TOOLTIPS"]                                           = "Affix tooltips"
 -- L["AFFECTS_SCENARIO_PROGRESS_TIMER_BARS"]                  = "Also affects scenario progress and timer bars."
 L["ALWAYS"]                                                   = "Always show"
--- L["ALWAYS_M_TIMER"]                                        = "Always show M+ timer."
+L["ALWAYS_M_TIMER"]                                           = "Always show M+ timer."
 -- L["AUTO_ADD_WQS_YOUR_CURRENT_ZONE"]                        = "Auto-add WQs in your current zone."
 -- L["AUTO_CLOSE_DELAY_DISABLE"]                              = "Auto-close delay (0 to disable)."
 -- L["AUTO_UNTRACK_FINISHED_ACTIVITIES"]                      = "Auto-untrack finished activities."
@@ -1881,7 +1888,7 @@ L["FOCUS_AH_CRAFT_HINT_TIER"]                                 = "Crafting tier 1
 -- L["RECENT_PROGRESS_TOP"]                                   = "Show recent progress at the top."
 -- L["RECIPE_ICON_NEXT_TITLE_REQUIRES_QUEST"]                 = "Show recipe icon next to title. Requires quest type icons in Display."
 L["SECTION_DIVIDERS"]                                         = "Show section dividers"
--- L["M_BLOCK_WHENEVER_AN_ACTIVE_KEYSTONE"]                   = "Show the M+ block whenever an active keystone is running."
+L["M_BLOCK_WHENEVER_AN_ACTIVE_KEYSTONE"]                      = "Show the M+ block whenever an active keystone is running."
 -- L["TRACKED_PROFESSION_RECIPES_LIST"]                       = "Show tracked profession recipes in the list."
 -- L["TRACKER_HEROIC_DUNGEONS"]                               = "Show tracker in Heroic dungeons. When unset, uses the master dungeon toggle."
 -- L["TRACKER_HEROIC_RAIDS"]                                  = "Show tracker in Heroic raids. When unset, uses the master raid toggle."

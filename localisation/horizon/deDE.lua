@@ -1,6 +1,6 @@
 if GetLocale() ~= "deDE" then return end
 
-local addon = _G.HorizonSuite
+local addon = _G._HorizonSuite_Loading or _G.HorizonSuiteBeta or _G.HorizonSuite
 if not addon then return end
 
 local L = setmetatable({}, { __index = addon.L })
@@ -390,6 +390,8 @@ L["AXIS_GLOBAL_TOGGLES"]                                      = "Globale Einstel
 -- L["AXIS_GLOBAL_FONT_SECTION"]                              = "Global Font (Coming Soon!)"
 -- L["AXIS_GLOBAL_SCALE_SECTION"]                             = "Global Scale"
 -- L["AXIS_MINIMAP_ICON_SECTION"]                             = "Minimap Icon"
+-- L["AXIS_MINIMAP_ICON_CIRCULAR"]                            = "Circular icon"
+L["AXIS_MINIMAP_ICON_CIRCULAR_DESC"]                          = "Round the Horizon minimap icon and add a gold ring border to match calendar, clock, and other circular minimap buttons."
 -- L["AXIS_CLASS_THEME_SECTION"]                              = "Class Theme"
 -- L["AXIS_GLOBAL_CLASS_THEME"]                               = "Global Class Theme"
 -- L["AXIS_CLASS_THEME_DASHBOARD"]                            = "Dashboard"
@@ -1000,6 +1002,11 @@ L["DASHBOARD_TYPO_OUTLINE"]                                   = "Schriftkontur d
 L["DASHBOARD_TYPO_OUTLINE_DESC"]                              = "When on, dashboard UI text uses the standard outlined font style. Turn off for a softer, flat look."
 L["DASHBOARD_TYPO_SHADOW"]                                    = "Textschattierung für Dashboard-Text"
 L["DASHBOARD_TYPO_SHADOW_DESC"]                               = "Fügt einen subtilen Schlagschatten hinter dem Dashboard-Text, um die Lesbarkeit zu verbessern."
+-- L["DASHBOARD_TYPO_HEADING_COLOR"]                          = "Heading Colour"
+-- L["DASHBOARD_TYPO_HEADING_COLOR_DESC"]                     = "Colour of the large headings on the Welcome and News tabs. Use a softer tone if pure white feels too bright on HDR displays."
+-- L["DASHBOARD_TYPO_HEADING_COLOR_WHITE"]                    = "White (default)"
+-- L["DASHBOARD_TYPO_HEADING_COLOR_CYAN"]                     = "Cyan (relaxed)"
+-- L["DASHBOARD_TYPO_HEADING_COLOR_GOLD"]                     = "Gold (relaxed)"
 L["FOCUS_BACKDROP_OPACITY"]                                   = "Deckkraft des Hintergrunds"
 L["FOCUS_PANEL_BACKGROUND_OPACITY"]                           = "Hintergrunddeckkraft des Fensters (0–1)."
 L["FOCUS_BORDER"]                                             = "Rahmen anzeigen"

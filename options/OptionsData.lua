@@ -24,6 +24,8 @@ local TYPOGRAPHY_KEYS = {
     titleFontPath = true,
     presenceTitleFontPath = true,
     presenceSubtitleFontPath = true,
+    presenceTitleFontOutline = true,
+    presenceSubtitleFontOutline = true,
     zoneFontPath = true,
     objectiveFontPath = true,
     sectionFontPath = true,
@@ -79,6 +81,8 @@ local INSIGHT_KEYS = {
     insightShowCharacterTitle   = true,
     insightPlayerNameColor      = true,
     insightPlayerNameGradient   = true,
+    insightTitleColorMode       = true,
+    insightTitleMatchNameColor  = true,
     insightTitleColor           = true,
     insightTitleColorR          = true,
     insightTitleColorG          = true,
@@ -170,6 +174,8 @@ local PRESENCE_KEYS = {
     presenceSecondarySmallSz = true,
     presenceTitleFontPath = true,
     presenceSubtitleFontPath = true,
+    presenceTitleFontOutline = true,
+    presenceSubtitleFontOutline = true,
     presenceZoneTypeColoring = true,
     presenceZoneColorFriendly = true,
     presenceZoneColorHostile = true,
@@ -398,6 +404,7 @@ local DASHBOARD_TYPOGRAPHY_KEYS = {
     dashboardFontSize = true,
     dashboardTextOutline = true,
     dashboardTextShadow = true,
+    dashboardHeadingColor = true,
 }
 
 function OptionsData_GetDB(key, default)
@@ -574,6 +581,10 @@ function OptionsData_NotifyMainAddon()
     elseif _G.HorizonSuite_ApplyDimensions then _G.HorizonSuite_ApplyDimensions() end
     if addon.ApplyBackdropOpacity then addon.ApplyBackdropOpacity() end
     if addon.ApplyBorderVisibility then addon.ApplyBorderVisibility() end
+    -- Re-apply colours and bar textures on visible entries; FullLayout repositions
+    -- but does not re-run the per-entry renderer that calls SetTexture, so without
+    -- this call texture/colour changes wait for an aggregator pass or /reload.
+    if addon.ApplyFocusColors then addon.ApplyFocusColors() end
     if addon.RequestRefresh then addon.RequestRefresh()
     elseif _G.HorizonSuite_RequestRefresh then _G.HorizonSuite_RequestRefresh() end
     local fullLayout = addon.FullLayout or _G.HorizonSuite_FullLayout
@@ -973,6 +984,7 @@ local OptionCategories = {
                 "dashboardFontSize",
                 "dashboardTextOutline",
                 "dashboardTextShadow",
+                "dashboardHeadingColor",
             }
             opts[#opts + 1] = {
                 type = "dropdown",
@@ -1037,6 +1049,24 @@ local OptionCategories = {
                     return v == true
                 end,
                 set = function(v) setDB("dashboardTextShadow", v) end,
+                refreshIds = dashboardTypoRefreshIds,
+            }
+            opts[#opts + 1] = {
+                type = "dropdown",
+                name = L["DASHBOARD_TYPO_HEADING_COLOR"] or "Heading Colour",
+                desc = L["DASHBOARD_TYPO_HEADING_COLOR_DESC"] or "Colour of the large headings on the Welcome and News tabs. Use a softer tone if pure white feels too bright on HDR displays.",
+                dbKey = "dashboardHeadingColor",
+                options = {
+                    { L["DASHBOARD_TYPO_HEADING_COLOR_WHITE"] or "White (default)", "white" },
+                    { L["DASHBOARD_TYPO_HEADING_COLOR_CYAN"]  or "Cyan (relaxed)",  "cyan"  },
+                    { L["DASHBOARD_TYPO_HEADING_COLOR_GOLD"]  or "Gold (relaxed)",  "gold"  },
+                },
+                preserveOrder = true,
+                get = function() return getDB("dashboardHeadingColor", "white") end,
+                set = function(v)
+                    setDB("dashboardHeadingColor", v)
+                    if addon.Dashboard_RefreshHeadingColors then addon.Dashboard_RefreshHeadingColors() end
+                end,
                 refreshIds = dashboardTypoRefreshIds,
             }
             opts[#opts + 1] = {
@@ -1258,7 +1288,17 @@ local OptionCategories = {
             opts[#opts + 1] = { type = "toggle", name = L["PRESENCE_LOCK_MINIMAP_BUTTON_POSITION"] or "Lock minimap button position", desc = L["PRESENCE_PREVENT_DRAGGING_HORIZON_MINIMAP_BUTTON"] or "Prevent dragging the Horizon minimap button.", dbKey = "minimapButtonLocked", visibleWhen = isMinimapStandalone, get = function() return getDB("minimapButtonLocked", false) end, set = function(v)
                 C_Timer.After(0, function() setDB("minimapButtonLocked", v) end)
             end }
-            opts[#opts + 1] = { type = "button", dbKey = "__minimapButtonReset", name = L["PRESENCE_RESET_MINIMAP_BUTTON_POSITION"] or "Reset minimap button position", desc = L["PRESENCE_RESET_MINIMAP_BUTTON_DEFAULT_POSITION"] or "Reset the minimap button to the default position (bottom-left).", visibleWhen = isMinimapStandalone, onClick = function() setDB("minimapButtonX", nil); setDB("minimapButtonY", nil); if addon.MinimapButton_ApplyPosition then addon.MinimapButton_ApplyPosition() end end }
+            opts[#opts + 1] = { type = "toggle", name = L["AXIS_MINIMAP_ICON_CIRCULAR"] or "Circular icon",
+                desc = L["AXIS_MINIMAP_ICON_CIRCULAR_DESC"] or "Round the Horizon icon, add a gold ring border, and snap it to the minimap's edge while dragging — matching calendar, clock, and other standard minimap buttons.",
+                dbKey = "minimapButtonCircular", visibleWhen = isMinimapStandalone,
+                get = function() return getDB("minimapButtonCircular", false) end,
+                set = function(v)
+                    setDB("minimapButtonCircular", v)
+                    if addon.MinimapButton_ApplyShape then addon.MinimapButton_ApplyShape() end
+                    -- Re-place the button: circular reads angle / square reads x/y.
+                    if addon.MinimapButton_ApplyPosition then addon.MinimapButton_ApplyPosition() end
+                end }
+            opts[#opts + 1] = { type = "button", dbKey = "__minimapButtonReset", name = L["PRESENCE_RESET_MINIMAP_BUTTON_POSITION"] or "Reset minimap button position", desc = L["PRESENCE_RESET_MINIMAP_BUTTON_DEFAULT_POSITION"] or "Reset the minimap button to the default position (bottom-left).", visibleWhen = isMinimapStandalone, onClick = function() setDB("minimapButtonX", nil); setDB("minimapButtonY", nil); setDB("minimapButtonAngle", nil); if addon.MinimapButton_ApplyPosition then addon.MinimapButton_ApplyPosition() end end }
             return opts
         end,
     },
@@ -1657,12 +1697,14 @@ local OptionCategories = {
         moduleKey = "focus",
         options = {
             { type = "section", name = L["VISTA_POSITION_LAYOUT"] },
-            { type = "toggle", name = L["FOCUS_LOCK_POSITION"], desc = L["FOCUS_PREVENT_DRAGGING_TRACKER"], dbKey = "lockPosition", get = function() return getDB("lockPosition", false) end, set = function(v) setDB("lockPosition", v) end },
+            { type = "toggle", name = L["FOCUS_LOCK_POSITION"], desc = L["FOCUS_PREVENT_DRAGGING_TRACKER"], dbKey = "lockPosition", get = function() return getDB("lockPosition", false) or getDB("focusDynamicWidth", false) end, set = function(v) setDB("lockPosition", v) end },
             { type = "toggle", name = L["FOCUS_GROW_UPWARD"], desc = L["FOCUS_ANCHOR_BOTTOM_LIST_GROWS_UPWARD"], dbKey = "growUp", get = function() return getDB("growUp", false) end, set = function(v) setDB("growUp", v); if addon.focus and addon.focus.layout then addon.focus.layout.scrollOffset = 0; addon.focus.layout.scrollBottomOffset = 0 end; if addon.FullLayout then addon.FullLayout() end end, refreshIds = { "growUpHeaderMode" } },
             { type = "dropdown", name = L["FOCUS_GROW_HEADER"], desc = L["KEEP_HEADER_BOTTOM_TOP_UNTIL_COLLAPSED"], tooltip = L["FOCUS_GROWING_UPWARD_KEEP_HEADER_BOTTOM_TOP"], dbKey = "growUpHeaderMode", options = { { L["FOCUS_HEADER_BOTTOM"], "always" }, { L["FOCUS_HEADER_SLIDES_COLLAPSE"], "collapse" } }, get = function() return getDB("growUpHeaderMode", "always") end, set = function(v) setDB("growUpHeaderMode", v); if addon.FullLayout then addon.FullLayout() end end, visibleWhen = function() return getDB("growUp", false) end },
             { type = "toggle", name = L["FOCUS_START_COLLAPSED"], desc = L["FOCUS_START_HEADER_SHOWN_UNTIL_YOU_EXPAND"], dbKey = "collapsed", get = function() return getDB("collapsed", false) end, set = function(v) setDB("collapsed", v) end },
             { type = "section", name = L["FOCUS_DIMENSIONS"] },
-            { type = "slider", name = L["FOCUS_PANEL_WIDTH"], desc = L["FOCUS_TRACKER_WIDTH_PIXELS"], dbKey = "panelWidth", min = 180, max = 800, get = function() return getDB("panelWidth", 260) end, set = function(v) setDB("panelWidth", math.max(180, math.min(800, v))) end },
+            { type = "toggle", name = L["FOCUS_DYNAMIC_WIDTH"] or "Shrink to Fit Content", desc = L["FOCUS_DYNAMIC_WIDTH_DESC"] or "Resize the tracker to fit the longest visible row, up to the maximum width below.", dbKey = "focusDynamicWidth", get = function() return getDB("focusDynamicWidth", false) end, set = function(v) setDB("focusDynamicWidth", v); OptionsData_NotifyMainAddon() end, refreshIds = { "panelWidth", "focusDynamicWidthMax", "lockPosition" } },
+            { type = "slider", name = L["FOCUS_PANEL_WIDTH"], desc = L["FOCUS_TRACKER_WIDTH_PIXELS"], dbKey = "panelWidth", min = 180, max = 800, get = function() return getDB("panelWidth", 260) end, set = function(v) setDB("panelWidth", math.max(180, math.min(800, v))) end, visibleWhen = function() return not getDB("focusDynamicWidth", false) end },
+            { type = "slider", name = L["FOCUS_DYNAMIC_WIDTH_MAX"] or "Maximum Width When Dynamic", desc = L["FOCUS_DYNAMIC_WIDTH_MAX_DESC"] or "Caps how wide the tracker can grow when shrink-to-fit is on.", dbKey = "focusDynamicWidthMax", min = 200, max = 800, get = function() return getDB("focusDynamicWidthMax", 400) end, set = function(v) setDB("focusDynamicWidthMax", math.max(200, math.min(800, v))); OptionsData_NotifyMainAddon() end, visibleWhen = function() return getDB("focusDynamicWidth", false) end },
             { type = "slider", name = L["FOCUS_MAX_CONTENT_HEIGHT"], desc = L["FOCUS_MAX_HEIGHT_OF_SCROLLABLE_LIST_PIXELS"], dbKey = "maxContentHeight", min = 200, max = 1500, get = function() return getDB("maxContentHeight", 480) end, set = function(v) setDB("maxContentHeight", math.max(200, math.min(1500, v))) end },
             { type = "toggle", name = L["FOCUS_STATIC_BACKGROUND"], desc = L["FOCUS_STATIC_BACKGROUND_DESC"], dbKey = "staticBackgroundEnabled", get = function() return getDB("staticBackgroundEnabled", false) end, set = function(v) setDB("staticBackgroundEnabled", v); if addon.FullLayout then addon.FullLayout() end end, refreshIds = { "staticPanelHeight" } },
             { type = "slider", name = L["FOCUS_STATIC_PANEL_HEIGHT"], desc = L["FOCUS_STATIC_PANEL_HEIGHT_DESC"], dbKey = "staticPanelHeight", min = 50, max = 1500, get = function() return math.max(50, math.min(1500, tonumber(getDB("staticPanelHeight", 400)) or 400)) end, set = function(v) setDB("staticPanelHeight", math.max(50, math.min(1500, v))); if addon.FullLayout then addon.FullLayout() end end, visibleWhen = function() return getDB("staticBackgroundEnabled", false) end },
@@ -2269,6 +2311,8 @@ local OptionCategories = {
             { type = "button", name = L["PRESENCE_RESET_TYPOGRAPHY_DEFAULTS"], desc = L["PRESENCE_RESET_PRESENCE_TYPOGRAPHY_OPTIONS_FONTS_SIZES"], onClick = function()
                 setDB("presenceTitleFontPath", nil)
                 setDB("presenceSubtitleFontPath", nil)
+                setDB("presenceTitleFontOutline", nil)
+                setDB("presenceSubtitleFontOutline", nil)
                 setDB("presencePrimaryLargeSz", nil)
                 setDB("presenceSecondaryLargeSz", nil)
                 setDB("presencePrimaryMediumSz", nil)
@@ -2289,9 +2333,11 @@ local OptionCategories = {
                 elseif addon.OptionsPanel_Refresh then
                     addon.OptionsPanel_Refresh()
                 end
-            end, refreshIds = { "presencePreview", "presenceTitleFontPath", "presenceSubtitleFontPath", "presencePrimaryLargeSz", "presenceSecondaryLargeSz", "presencePrimaryMediumSz", "presenceSecondaryMediumSz", "presencePrimarySmallSz", "presenceSecondarySmallSz", "presenceBossEmoteColor", "presenceDiscoveryColor", "presenceZoneTypeColoring", "presenceZoneColorFriendly", "presenceZoneColorHostile", "presenceZoneColorContested", "presenceZoneColorSanctuary" } },
+            end, refreshIds = { "presencePreview", "presenceTitleFontPath", "presenceSubtitleFontPath", "presenceTitleFontOutline", "presenceSubtitleFontOutline", "presencePrimaryLargeSz", "presenceSecondaryLargeSz", "presencePrimaryMediumSz", "presenceSecondaryMediumSz", "presencePrimarySmallSz", "presenceSecondarySmallSz", "presenceBossEmoteColor", "presenceDiscoveryColor", "presenceZoneTypeColoring", "presenceZoneColorFriendly", "presenceZoneColorHostile", "presenceZoneColorContested", "presenceZoneColorSanctuary" } },
             { type = "dropdown", name = L["PRESENCE_MAIN_TITLE_FONT"], desc = L["PRESENCE_FONT_FAMILY_MAIN_TITLE"], dbKey = "presenceTitleFontPath", searchable = true, options = function() return GetPerElementFontDropdownOptions("presenceTitleFontPath") end, get = function() return getDB("presenceTitleFontPath", FONT_USE_GLOBAL) end, set = function(v) setDB("presenceTitleFontPath", v) end, displayFn = DisplayPerElementFont, refreshIds = { "presencePreview" }, fontPreviewInList = true },
             { type = "dropdown", name = L["PRESENCE_SUBTITLE_FONT"], desc = L["PRESENCE_FONT_FAMILY_SUBTITLE"], dbKey = "presenceSubtitleFontPath", searchable = true, options = function() return GetPerElementFontDropdownOptions("presenceSubtitleFontPath") end, get = function() return getDB("presenceSubtitleFontPath", FONT_USE_GLOBAL) end, set = function(v) setDB("presenceSubtitleFontPath", v) end, displayFn = DisplayPerElementFont, refreshIds = { "presencePreview" }, fontPreviewInList = true },
+            { type = "dropdown", name = L["PRESENCE_MAIN_TITLE_OUTLINE"] or "Main title outline", desc = L["PRESENCE_FONT_OUTLINE_MAIN_TITLE"] or "Outline style for main notification titles.", dbKey = "presenceTitleFontOutline", options = OUTLINE_OPTIONS, preserveOrder = true, get = function() return getDB("presenceTitleFontOutline", "OUTLINE") end, set = function(v) setDB("presenceTitleFontOutline", v) end, refreshIds = { "presencePreview" } },
+            { type = "dropdown", name = L["PRESENCE_SUBTITLE_OUTLINE"] or "Subtitle outline", desc = L["PRESENCE_FONT_OUTLINE_SUBTITLE"] or "Outline style for notification subtitles.", dbKey = "presenceSubtitleFontOutline", options = OUTLINE_OPTIONS, preserveOrder = true, get = function() return getDB("presenceSubtitleFontOutline", "OUTLINE") end, set = function(v) setDB("presenceSubtitleFontOutline", v) end, refreshIds = { "presencePreview" } },
             { type = "section", name = L["PRESENCE_LARGE_NOTIFICATIONS"] },
             { type = "slider", name = L["PRESENCE_LARGE_PRIMARY_SIZE"], desc = L["PRESENCE_FONT_SIZE_LARGE_NOTIFICATION_TITLES_ZONE"], dbKey = "presencePrimaryLargeSz", min = 12, max = 72, get = function() return math.max(12, math.min(72, tonumber(getDB("presencePrimaryLargeSz", 48)) or 48)) end, set = function(v) setDB("presencePrimaryLargeSz", math.max(12, math.min(72, v))) end, refreshIds = { "presencePreview" } },
             { type = "slider", name = L["PRESENCE_LARGE_SECONDARY_SIZE"], desc = L["PRESENCE_FONT_SIZE_LARGE_NOTIFICATION_SUBTITLES"], dbKey = "presenceSecondaryLargeSz", min = 12, max = 40, get = function() return math.max(12, math.min(40, tonumber(getDB("presenceSecondaryLargeSz", 24)) or 24)) end, set = function(v) setDB("presenceSecondaryLargeSz", math.max(12, math.min(40, v))) end, refreshIds = { "presencePreview" } },
@@ -2352,11 +2398,39 @@ local OptionCategories = {
         dashboardPreviewMode = "player",
         options = {
             { type = "section", name = L["INSIGHT_SECTION_IDENTITY"] or "Identity" },
-            { type = "dropdown", name = L["INSIGHT_PLAYER_NAME_COLOUR"] or "Player name colour", desc = L["INSIGHT_PLAYER_NAME_COLOUR_DESC"] or "Colour for the player's name on the first tooltip line.", dbKey = "insightPlayerNameColor", options = { { L["INSIGHT_PLAYER_NAME_COLOUR_FACTION"] or "Faction", "faction" }, { L["INSIGHT_PLAYER_NAME_COLOUR_CLASS"] or "Class", "class" } }, get = function() local v = getDB("insightPlayerNameColor", "faction"); return v == "class" and "class" or "faction" end, set = function(v) setDB("insightPlayerNameColor", v == "class" and "class" or "faction") end, refreshIds = { "insightPlayerNameGradient" } },
-            { type = "toggle", name = L["INSIGHT_PLAYER_NAME_GRADIENT"] or "Class colour gradient", desc = L["INSIGHT_PLAYER_NAME_GRADIENT_DESC"] or "Render the player name as a two-stop gradient of their class colour (only applies when the name colour is set to Class).", dbKey = "insightPlayerNameGradient", isNew = "4.12.6a", get = function() return getDB("insightPlayerNameGradient", false) end, set = function(v) setDB("insightPlayerNameGradient", v) end, visibleWhen = function() return getDB("insightPlayerNameColor", "faction") == "class" end },
+            { type = "dropdown", name = L["INSIGHT_PLAYER_NAME_COLOUR"] or "Player name colour", desc = L["INSIGHT_PLAYER_NAME_COLOUR_DESC"] or "Colour for the player's name on the first tooltip line.", dbKey = "insightPlayerNameColor", options = { { L["INSIGHT_PLAYER_NAME_COLOUR_FACTION"] or "Faction", "faction" }, { L["INSIGHT_PLAYER_NAME_COLOUR_CLASS"] or "Class", "class" } }, get = function() local v = getDB("insightPlayerNameColor", "faction"); return v == "class" and "class" or "faction" end, set = function(v) setDB("insightPlayerNameColor", v == "class" and "class" or "faction") end, refreshIds = { "insightPlayerNameGradient", "insightTitleColorMode", "insightTitleColor" } },
+            { type = "toggle", name = L["INSIGHT_PLAYER_NAME_GRADIENT"] or "Class colour gradient", desc = L["INSIGHT_PLAYER_NAME_GRADIENT_DESC"] or "Render the player name as a two-stop gradient of their class colour (only applies when the name colour is set to Class).", dbKey = "insightPlayerNameGradient", isNew = "4.12.6a", get = function() return getDB("insightPlayerNameGradient", false) end, set = function(v) setDB("insightPlayerNameGradient", v) end, visibleWhen = function() return getDB("insightPlayerNameColor", "faction") == "class" end, refreshIds = { "insightTitleColorMode", "insightTitleColor" } },
             { type = "toggle", name = L["GUILD_RANK"] or "Guild rank", desc = L["AXIS_APPEND_PLAYER_S_GUILD_RANK_NEXT"] or "Append the player's guild rank next to their guild name.", dbKey = "insightShowGuildRank", get = function() return getDB("insightShowGuildRank", true) end, set = function(v) setDB("insightShowGuildRank", v) end },
-            { type = "toggle", name = L["AXIS_CHARACTER_TITLE"] or "Character title", desc = L["AXIS_PLAYER_S_SELECTED_TITLE_ACHIEVEMENT_PVP"] or "Show the player's selected title (achievement or PvP) in the name line.", dbKey = "insightShowCharacterTitle", get = function() return getDB("insightShowCharacterTitle", true) end, set = function(v) setDB("insightShowCharacterTitle", v) end, refreshIds = { "insightTitleColor" } },
-            { type = "color", name = L["AXIS_TITLE_COLOUR"] or "Title color", desc = L["AXIS_COLOUR_OF_CHARACTER_TITLE_PLAYER_TOOLTIP"] or "Color of the character title in the player tooltip name line.", dbKey = "insightTitleColor", default = { 1.00, 0.82, 0.00 }, visibleWhen = function() return getDB("insightShowCharacterTitle", true) end },
+            { type = "toggle", name = L["AXIS_CHARACTER_TITLE"] or "Character title", desc = L["AXIS_PLAYER_S_SELECTED_TITLE_ACHIEVEMENT_PVP"] or "Show the player's selected title (achievement or PvP) in the name line.", dbKey = "insightShowCharacterTitle", get = function() return getDB("insightShowCharacterTitle", true) end, set = function(v) setDB("insightShowCharacterTitle", v) end, refreshIds = { "insightTitleColorMode", "insightTitleColor" } },
+            { type = "dropdown", name = L["AXIS_TITLE_COLOUR"] or "Title Colour", desc = L["INSIGHT_TITLE_COLOUR_MODE_DESC"] or "Choose how character titles are coloured in the player tooltip name line.", dbKey = "insightTitleColorMode", options = function()
+                local opts = {
+                    { L["INSIGHT_TITLE_COLOUR_MATCH_NAME"] or "Match Name", "match" },
+                }
+                if getDB("insightPlayerNameColor", "faction") == "class" and getDB("insightPlayerNameGradient", false) then
+                    opts[#opts + 1] = { L["INSIGHT_TITLE_COLOUR_MATCH_NAME_GRADIENT"] or "Match Name (Gradient)", "gradient" }
+                end
+                opts[#opts + 1] = { L["INSIGHT_TITLE_COLOUR_CUSTOM"] or "Custom", "custom" }
+                return opts
+            end, get = function()
+                local v = getDB("insightTitleColorMode", nil)
+                if v ~= "match" and v ~= "gradient" and v ~= "custom" then
+                    v = getDB("insightTitleMatchNameColor", false) and "match" or "custom"
+                end
+                if v == "gradient" and not (getDB("insightPlayerNameColor", "faction") == "class" and getDB("insightPlayerNameGradient", false)) then
+                    v = "match"
+                end
+                return v
+            end, set = function(v) setDB("insightTitleColorMode", (v == "match" or v == "gradient" or v == "custom") and v or "custom") end, visibleWhen = function() return getDB("insightShowCharacterTitle", true) end, refreshIds = { "insightTitleColor" } },
+            { type = "color", name = L["INSIGHT_TITLE_CUSTOM_COLOUR"] or "Custom Color", desc = L["AXIS_COLOUR_OF_CHARACTER_TITLE_PLAYER_TOOLTIP"] or "Color of the character title in the player tooltip name line.", dbKey = "insightTitleColor", default = { 1.00, 0.82, 0.00 }, visibleWhen = function()
+                local mode = getDB("insightTitleColorMode", nil)
+                if mode ~= "match" and mode ~= "gradient" and mode ~= "custom" then
+                    mode = getDB("insightTitleMatchNameColor", false) and "match" or "custom"
+                end
+                if mode == "gradient" and not (getDB("insightPlayerNameColor", "faction") == "class" and getDB("insightPlayerNameGradient", false)) then
+                    mode = "match"
+                end
+                return getDB("insightShowCharacterTitle", true) and mode == "custom"
+            end },
             { type = "section", name = L["INSIGHT_SECTION_STATUS_PVP"] or "Status & PvP" },
             { type = "toggle", name = L["STATUS_BADGES"] or "Status badges", desc = L["COMBAT_AFK_DND_PVP_PARTY_FRIENDS"], dbKey = "insightShowStatusBadges", get = function() return getDB("insightShowStatusBadges", true) end, set = function(v) setDB("insightShowStatusBadges", v) end },
             { type = "toggle", name = L["HONOR_LEVEL"] or "Honor level", desc = L["AXIS_PLAYER_S_PVP_HONOR_LEVEL_TOOLTIP"] or "Show the player's PvP honor level in the tooltip.", dbKey = "insightShowHonorLevel", get = function() return getDB("insightShowHonorLevel", true) end, set = function(v) setDB("insightShowHonorLevel", v) end },

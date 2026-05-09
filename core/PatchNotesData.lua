@@ -14,6 +14,47 @@ local addon = _G.HorizonSuite
 
 addon.PATCH_NOTES = {
 
+    ["4.17.7"] = {
+        date = "2026-05-09",
+        {
+            section = "Improvements",
+            bullets = {
+                "Vista: circular Horizon button variant to match SexyMap and HidingBar-style round minimap buttons.",
+                "Presence: font outline options (None, Thin Outline, Thick Outline, Monochrome Outline, SLUG).",
+                "Insight: suffix character titles now render correctly (including comma forms), with a new Title Colour mode picker (Match Name / Match Name (Gradient) / Custom).",
+            },
+        },
+        {
+            section = "Fixes",
+            bullets = {
+                "Insight: guild rank now displays correctly in player tooltips without realm name leakage.",
+                "Vista: square minimap mode no longer errors when clearing the Horizon button's highlight texture.",
+            },
+        },
+    },
+
+    ["4.17.6"] = {
+        date = "2026-05-08",
+        {
+            section = "Improvements",
+            bullets = {
+                "Focus: bar texture and colour changes now apply live without requiring a UI reload.",
+                "Axis: Welcome and News content now honours the Dashboard Font option.",
+                "Axis: choose a softer heading colour for the Dashboard Welcome and News blocks — previously locked to pure white, which is uncomfortable on HDR displays.",
+            },
+        },
+    },
+
+    ["4.17.5"] = {
+        date = "2026-05-07",
+        {
+            section = "Fixes",
+            bullets = {
+                "Focus: Mythic+ block 'Always Show' toggle now previews the block outside of a Mythic+ dungeon — previously it did nothing. The toggle is reset to off on upgrade.",
+            },
+        },
+    },
+
     ["4.17.4"] = {
         date = "2026-05-04",
         {

@@ -10,6 +10,39 @@ All notable changes to Horizon Suite are documented here.
 
 ---
 
+## [4.17.7] – 2026-05-09
+
+### 🔧 Improvements
+
+- **(Vista) Circular Horizon button** — A round minimap-button variant so the Horizon icon matches addons like SexyMap and HidingBar that style their buttons round.
+- **(Presence) Font outline options** — Presence text gains the same outline picker as the rest of the addon (None, Thin Outline, Thick Outline, Monochrome Outline, SLUG).
+- **(Insight) Character titles and title colour** — Suffix titles now render correctly (including comma-prefixed forms like *"Aragorn, the Argent Champion"*), and a new Title Colour dropdown lets you pick **Match Name**, **Match Name (Gradient)**, or **Custom**.
+
+### 🐛 Fixes
+
+- **(Insight)** Guild rank now displays correctly in player tooltips — no more realm name leaking into the rank slot, and the rank sits inline beside the guild name.
+- **(Vista)** Square minimap mode no longer errors when clearing the Horizon button's highlight texture.
+
+---
+
+## [4.17.6] – 2026-05-08
+
+### 🔧 Improvements
+
+- **(Focus)** Bar texture and colour changes now apply live without requiring a UI reload.
+- **(Axis)** Welcome and News content now respects the Dashboard Font option instead of using a hardcoded font.
+- **(Axis) Configurable Dashboard heading colour** — Choose a softer accent colour for the Welcome and News headings so pure white at full HDR luminance no longer dominates the UI.
+
+---
+
+## [4.17.5] – 2026-05-07
+
+### 🐛 Fixes
+
+- **(Focus)** Mythic+ block "Always Show" toggle now displays the block as a preview when you're outside a Mythic+ dungeon — previously it had no effect. The toggle is reset to off on upgrade so the new preview doesn't appear unexpectedly. Tooltip wording updated to match.
+
+---
+
 ## [4.17.4] – 2026-05-04
 
 ### 🔧 Improvements
