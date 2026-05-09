@@ -88,6 +88,15 @@ local category = {
             refreshIds = { "talkingHeadPreview" },
         },
         {
+            type  = "toggle",
+            name  = L["TALKING_HEAD_NAME_OUTLINE"] or "Name Outline",
+            desc  = L["TALKING_HEAD_NAME_OUTLINE_DESC"] or "Apply text outline to the NPC name.",
+            dbKey = "talkingHeadNameOutline",
+            get        = function() return getDB("talkingHeadNameOutline", D.talkingHeadNameOutline) end,
+            set        = function(v) setDB("talkingHeadNameOutline", v); updateTalkingHead() end,
+            refreshIds = { "talkingHeadPreview" },
+        },
+        {
             type    = "color",
             name    = L["TALKING_HEAD_NAME_COLOUR"] or "Name Colour",
             desc    = L["TALKING_HEAD_NAME_COLOUR_DESC"] or "Colour of the NPC name text.",
@@ -119,6 +128,15 @@ local category = {
             max   = 20,
             get        = function() return math.max(10, math.min(20, tonumber(getDB("talkingHeadTextSize", D.talkingHeadTextSize)) or D.talkingHeadTextSize)) end,
             set        = function(v) setDB("talkingHeadTextSize", math.max(10, math.min(20, v))); updateTalkingHead() end,
+            refreshIds = { "talkingHeadPreview" },
+        },
+        {
+            type  = "toggle",
+            name  = L["TALKING_HEAD_TEXT_OUTLINE"] or "Text Outline",
+            desc  = L["TALKING_HEAD_TEXT_OUTLINE_DESC"] or "Apply text outline to the NPC dialogue text.",
+            dbKey = "talkingHeadTextOutline",
+            get        = function() return getDB("talkingHeadTextOutline", D.talkingHeadTextOutline) end,
+            set        = function(v) setDB("talkingHeadTextOutline", v); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
         },
         {

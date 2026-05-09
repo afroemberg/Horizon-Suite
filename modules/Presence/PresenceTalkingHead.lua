@@ -15,10 +15,12 @@ local DEFAULTS = {
     talkingHeadMuteVoice    = false,
     talkingHeadScale        = 1.0,
     talkingHeadNameSize     = 16,
+    talkingHeadNameOutline  = true,
     talkingHeadNameColorR   = 0.55,
     talkingHeadNameColorG   = 0.65,
     talkingHeadNameColorB   = 0.75,
     talkingHeadTextSize     = 14,
+    talkingHeadTextOutline  = true,
 }
 addon.Presence.TalkingHeadDefaults = DEFAULTS
 
@@ -86,26 +88,28 @@ end
 local function ApplyTalkingHeadContent(frame)
     if not frame then return end
 
-    local textFont = FontPath("talkingHeadTextFontPath")
-    local textSize = tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize
+    local textFont    = FontPath("talkingHeadTextFontPath")
+    local textSize    = tonumber(GetOption("talkingHeadTextSize",    DEFAULTS.talkingHeadTextSize))    or DEFAULTS.talkingHeadTextSize
+    local textOutline = GetOption("talkingHeadTextOutline", DEFAULTS.talkingHeadTextOutline) and "OUTLINE" or ""
     if frame.TextFrame and frame.TextFrame.Text then
         local fs = frame.TextFrame.Text
         -- Blizzard sets a FontObject on each PlayCurrent call; clear it so our
         -- direct SetFont call takes effect rather than being overridden by the object.
         fs:SetFontObject(nil)
-        fs:SetFont(textFont, textSize, "OUTLINE")
+        fs:SetFont(textFont, textSize, textOutline)
         fs:SetShadowOffset(1, -1)
     end
 
-    local nameFont = FontPath("talkingHeadNameFontPath")
-    local nameSize = tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize
+    local nameFont    = FontPath("talkingHeadNameFontPath")
+    local nameSize    = tonumber(GetOption("talkingHeadNameSize",    DEFAULTS.talkingHeadNameSize))    or DEFAULTS.talkingHeadNameSize
+    local nameOutline = GetOption("talkingHeadNameOutline", DEFAULTS.talkingHeadNameOutline) and "OUTLINE" or ""
     local nr = tonumber(GetOption("talkingHeadNameColorR", DEFAULTS.talkingHeadNameColorR)) or DEFAULTS.talkingHeadNameColorR
     local ng = tonumber(GetOption("talkingHeadNameColorG", DEFAULTS.talkingHeadNameColorG)) or DEFAULTS.talkingHeadNameColorG
     local nb = tonumber(GetOption("talkingHeadNameColorB", DEFAULTS.talkingHeadNameColorB)) or DEFAULTS.talkingHeadNameColorB
     if frame.NameFrame and frame.NameFrame.Name then
         local n = frame.NameFrame.Name
         n:SetFontObject(nil)
-        n:SetFont(nameFont, nameSize, "OUTLINE")
+        n:SetFont(nameFont, nameSize, nameOutline)
         n:SetShadowOffset(1, -1)
         n:SetTextColor(nr, ng, nb)
     end
@@ -191,14 +195,14 @@ local function InstallHooks(frame)
         LockDirectFont(frame.NameFrame.Name, function()
             return FontPath("talkingHeadNameFontPath"),
                    tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize,
-                   "OUTLINE"
+                   GetOption("talkingHeadNameOutline", DEFAULTS.talkingHeadNameOutline) and "OUTLINE" or ""
         end)
     end
     if frame.TextFrame and frame.TextFrame.Text then
         LockDirectFont(frame.TextFrame.Text, function()
             return FontPath("talkingHeadTextFontPath"),
                    tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize,
-                   "OUTLINE"
+                   GetOption("talkingHeadTextOutline", DEFAULTS.talkingHeadTextOutline) and "OUTLINE" or ""
         end)
     end
     -- Late-install catch: first dialogue already showing when hooks were wired
@@ -305,19 +309,20 @@ function addon.Presence.CreateTalkingHeadPreviewWidget(parent)
     LockDirectFont(nameText, function()
         return FontPath("talkingHeadNameFontPath"),
                tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize,
-               "OUTLINE"
+               GetOption("talkingHeadNameOutline", DEFAULTS.talkingHeadNameOutline) and "OUTLINE" or ""
     end)
     LockDirectFont(dialogueText, function()
         return FontPath("talkingHeadTextFontPath"),
                tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize,
-               "OUTLINE"
+               GetOption("talkingHeadTextOutline", DEFAULTS.talkingHeadTextOutline) and "OUTLINE" or ""
     end)
 
     local function Refresh()
         local nameFont = FontPath("talkingHeadNameFontPath")
         local nameSize = tonumber(GetOption("talkingHeadNameSize", DEFAULTS.talkingHeadNameSize)) or DEFAULTS.talkingHeadNameSize
+        local nameOutline = GetOption("talkingHeadNameOutline", DEFAULTS.talkingHeadNameOutline) and "OUTLINE" or ""
         nameText:SetFontObject(nil)  -- clear any inherited FontObject so SetFont applies directly
-        nameText:SetFont(nameFont, nameSize, "OUTLINE")
+        nameText:SetFont(nameFont, nameSize, nameOutline)
         nameText:SetShadowOffset(1, -1)
         nameText:SetText(UnitName("player") or L["TALKING_HEAD_PREVIEW_NPC_NAME"] or "You")
         local nr = tonumber(GetOption("talkingHeadNameColorR", DEFAULTS.talkingHeadNameColorR)) or DEFAULTS.talkingHeadNameColorR
@@ -327,8 +332,9 @@ function addon.Presence.CreateTalkingHeadPreviewWidget(parent)
 
         local textFont = FontPath("talkingHeadTextFontPath")
         local textSize = tonumber(GetOption("talkingHeadTextSize", DEFAULTS.talkingHeadTextSize)) or DEFAULTS.talkingHeadTextSize
+        local textOutline = GetOption("talkingHeadTextOutline", DEFAULTS.talkingHeadTextOutline) and "OUTLINE" or ""
         dialogueText:SetFontObject(nil)
-        dialogueText:SetFont(textFont, textSize, "OUTLINE")
+        dialogueText:SetFont(textFont, textSize, textOutline)
         dialogueText:SetShadowOffset(1, -1)
         dialogueText:SetText(L["TALKING_HEAD_PREVIEW_DIALOGUE"] or "Azeroth needs heroes. Will you answer the call?")
 
