@@ -421,7 +421,7 @@ L["INSIGHT_SCALE"]                                            = "Insight-Skalier
 L["AXIS_SCALE_INSIGHT_TOOLTIP_MODULE"]                        = "Skalierung für das Insight-Tooltip-Modul (50–200 %)"
 L["CACHE_SCALE"]                                              = "Cache-Skalierung"
 L["AXIS_SCALE_CACHE_LOOT_TOAST_MODULE"]                       = "Skalierung des Cache-Beutebenachrichtungsmoduls (50–200 %)."
-L["CACHE_FONT"]                                               = "Loot toast font"
+-- L["CACHE_FONT"]                                            = "Loot Toast Font"
 -- L["CACHE_FONT_FAMILY"]                                     = "Font family used for loot toast text. Use 'Use global font' to follow the addon-wide font."
 L["AXIS_ENABLE_HORIZON_INSIGHT_MODULE"]                       = "Horizon-Insight-Modul aktivieren"
 L["AXIS_CINEMATIC_TOOLTIPS_CLASS_COLOURS_SPEC_DISPLAY"]       = "Filmische Tooltips mit Klassenfarben, Spezialisierungsanzeige und Fraktionssymbolen."
@@ -533,6 +533,11 @@ L["AXIS_PVP_TITLE"]                                           = "PvP-Titel anzei
 L["AXIS_PLAYER_S_PVP_TITLE_E_G"]                              = "PvP-Titel des Spielers (z.B. Gladiator) im Tooltip anzeigen."
 L["AXIS_CHARACTER_TITLE"]                                     = "Charaktertitel"
 L["AXIS_PLAYER_S_SELECTED_TITLE_ACHIEVEMENT_PVP"]             = "Stellt den gewählten Titel (Erfolg oder PvP) in der Namenszeile voran."
+-- L["INSIGHT_TITLE_COLOUR_MODE_DESC"]                        = "Choose how character titles are coloured in the player tooltip name line."
+-- L["INSIGHT_TITLE_COLOUR_MATCH_NAME"]                       = "Match Name"
+-- L["INSIGHT_TITLE_COLOUR_MATCH_NAME_GRADIENT"]              = "Match Name (Gradient)"
+-- L["INSIGHT_TITLE_COLOUR_CUSTOM"]                           = "Custom"
+-- L["INSIGHT_TITLE_CUSTOM_COLOUR"]                           = "Custom Color"
 L["AXIS_TITLE_COLOUR"]                                        = "Titelfarbe"
 L["AXIS_COLOUR_OF_CHARACTER_TITLE_PLAYER_TOOLTIP"]            = "Farbe des Charaktertitels in der Namenszeile des Tooltips."
 L["AXIS_STATUS_BADGES"]                                       = "Statusmarkierungen anzeigen"
@@ -571,6 +576,10 @@ L["FOCUS_ALIGN_CONTENT_RIGHT"]                                = "Inhalt rechts a
 L["FOCUS_RIGHT_ALIGN_QUEST_TITLES_OBJECTIVES_WITHIN"]         = "Richte die Quest-Titel und -ziele rechtsbündig aus"
 L["FOCUS_PANEL_WIDTH"]                                        = "Anzeigebreite"
 L["FOCUS_TRACKER_WIDTH_PIXELS"]                               = "Breite des Zielverfolgers"
+-- L["FOCUS_DYNAMIC_WIDTH"]                                   = "Shrink to Fit Content"
+-- L["FOCUS_DYNAMIC_WIDTH_DESC"]                              = "Resize the tracker to fit the longest visible row, up to the maximum width below. Hides the fixed Tracker Width slider while on."
+-- L["FOCUS_DYNAMIC_WIDTH_MAX"]                               = "Maximum Width When Dynamic"
+-- L["FOCUS_DYNAMIC_WIDTH_MAX_DESC"]                          = "Caps how wide the tracker can grow when shrink-to-fit is on (200–800 px)."
 L["FOCUS_MAX_CONTENT_HEIGHT"]                                 = "Maximalhöhe"
 L["FOCUS_MAX_HEIGHT_OF_SCROLLABLE_LIST_PIXELS"]               = "Maximale Höhe der scrollbaren ZielverfolgerListe"
 -- L["FOCUS_STATIC_BACKGROUND"]                               = "Static Background Size"
@@ -1235,6 +1244,10 @@ L["PRESENCE_MAIN_TITLE_FONT"]                                 = "Schriftart für
 L["PRESENCE_FONT_FAMILY_MAIN_TITLE"]                          = "Schriftart für den Haupttitel."
 L["PRESENCE_SUBTITLE_FONT"]                                   = "Schriftart für Untertitel"
 L["PRESENCE_FONT_FAMILY_SUBTITLE"]                            = "Schriftart für den Untertitel."
+-- L["PRESENCE_MAIN_TITLE_OUTLINE"]                           = "Main Title Outline"
+-- L["PRESENCE_FONT_OUTLINE_MAIN_TITLE"]                      = "Outline style for main notification titles."
+-- L["PRESENCE_SUBTITLE_OUTLINE"]                             = "Subtitle Outline"
+-- L["PRESENCE_FONT_OUTLINE_SUBTITLE"]                        = "Outline style for notification subtitles."
 L["PRESENCE_RESET_TYPOGRAPHY_DEFAULTS"]                       = "Typografie auf Standardwerte zurücksetzen"
 L["PRESENCE_RESET_PRESENCE_TYPOGRAPHY_OPTIONS_FONTS_SIZES"]   = "Setzt sämtliche Presence-Typografieeinstellungen (Schriftarten & -größen, sowie Farben) auf die Standardwerte zurück."
 L["PRESENCE_LARGE_NOTIFICATIONS"]                             = "Große Benachrichtigungen"
@@ -1319,7 +1332,7 @@ L["FOCUS_ORDER"]                                              = "Reihenfolge"
 -- =====================================================================
 -- Tracker section labels (SECTION_LABELS)
 -- =====================================================================
-L["UI_DUNGEON"]                                               = "Dungeon"
+-- L["UI_DUNGEON"]                                            = "DUNGEON"
 L["UI_RAID"]                                                  = "Schlachtzug"
 L["UI_DELVES"]                                                = "Tiefen"
 L["UI_SCENARIO_EVENTS"]                                       = "Szenario"
@@ -1347,7 +1360,7 @@ L["UI_DECOR"]                                                 = "Dekoration"
 L["UI_RECIPES"]                                               = "Rezepte"
 L["UI_ADVENTURE_GUIDE"]                                       = "Reisetagebuch"
 L["UI_APPEARANCES"]                                           = "Vorlagen"
-L["UI_QUESTS"]                                                = "Quests"
+-- L["UI_QUESTS"]                                             = "QUESTS"
 L["UI_READY_TO_TURN_IN"]                                      = "Bereit zur Abgabe"
 
 -- =====================================================================
@@ -1601,7 +1614,7 @@ L["VISTA_DISABLE_DONE"]                                       = "Deaktivieren we
 L["VISTA_MOUSEOVER_BAR"]                                      = "Mausüber-Leiste"
 L["VISTA_RIGHT_CLICK_PANEL"]                                  = "Rechtsklick-Anzeige"
 L["VISTA_FLOATING_DRAWER"]                                    = "Schwebende Schublade"
-L["VISTA_DRAWER_BUTTON_ICON"]                                 = "Drawer button icon"
+-- L["VISTA_DRAWER_BUTTON_ICON"]                              = "Drawer Button Icon"
 L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
 -- L["VISTA_CHOOSE_ICON"]                                     = "Choose icon"
 -- L["VISTA_CHOOSE_DRAWER_ICON"]                              = "Choose Drawer Icon"
@@ -1950,6 +1963,7 @@ L["ZONE_LABELS"]                                              = "Zonenbeschriftu
 L["ZONE_NAME_NEW_ZONE"]                                       = "Der Zonenname erscheint weiterhin beim Betreten einer neuen Zone."
 L["ZONE_TYPE_COLOURING"]                                      = "Färbung nach Zonentyp"
 L["FOCUS_COMPLETED_CHECKMARK"]                                = "|TInterface\\\\Buttons\\\\UI-CheckBox-Check:12:12:0:0|t anstelle von grüngefärbten abgeschlossenen Zielen."
+
 
 
 
