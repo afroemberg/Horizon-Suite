@@ -196,19 +196,61 @@ case "$EVENT_NAME" in
           TITLE="🚀 PR #${NUMBER} opened — $(trim "$PTITLE" 200)"
           COLOR=$COLOR_OPENED
         fi
-        # Build the assignee line. Pings only fire on opened, and only for
-        # assignees who aren't the author (skip self-pings).
+        # Auto-assigned reviewers (added by another workflow's GITHUB_TOKEN)
+        # don't appear in this event's snapshot — and they don't fire a
+        # follow-up `review_requested` event either, because GitHub suppresses
+        # event recursion from GITHUB_TOKEN-driven actions. Sleep briefly to
+        # let any auto-assign workflow land, then refetch the live PR state.
+        sleep 8
+        LIVE_PR=$(gh api "repos/${REPO}/pulls/${NUMBER}" 2>/dev/null || echo "")
+        if [ -n "$LIVE_PR" ] && echo "$LIVE_PR" | jq -e . >/dev/null 2>&1; then
+          mapfile -t ASSIGNEES < <(echo "$LIVE_PR" | jq -r '.assignees[]?.login // empty')
+          mapfile -t REVIEWERS < <(echo "$LIVE_PR" | jq -r '.requested_reviewers[]?.login // empty')
+        else
+          REVIEWERS=()
+        fi
+
+        # Build the assignee + reviewer lines. Pings only fire on opened, and
+        # only for users who aren't the PR author (skip self-pings).
+        ASSIGNEE_LINE=""
         if [ "${#ASSIGNEES[@]}" -gt 0 ]; then
           ASSIGNEE_LINE=$(mentions_for_logins "$AUTHOR_LOGIN" "${ASSIGNEES[@]}")
-          if [ -n "$ASSIGNEE_LINE" ]; then
-            CONTENT="$ASSIGNEE_LINE"
-            DESCRIPTION="**Assigned:** ${ASSIGNEE_LINE}"
-          else
-            DESCRIPTION="**Assigned:** _self-assigned to author_"
-          fi
+        fi
+        REVIEWER_LINE=""
+        if [ "${#REVIEWERS[@]}" -gt 0 ]; then
+          REVIEWER_LINE=$(mentions_for_logins "$AUTHOR_LOGIN" "${REVIEWERS[@]}")
+        fi
+
+        # Description block: one line for each non-empty role.
+        if [ -n "$ASSIGNEE_LINE" ]; then
+          DESCRIPTION="**Assigned:** ${ASSIGNEE_LINE}"
+        elif [ "${#ASSIGNEES[@]}" -gt 0 ]; then
+          DESCRIPTION="**Assigned:** _self-assigned to author_"
         else
           DESCRIPTION="**Assigned:** _unassigned_"
         fi
+        if [ -n "$REVIEWER_LINE" ]; then
+          DESCRIPTION="${DESCRIPTION}"$'\n'"**Reviewers:** ${REVIEWER_LINE}"
+        elif [ "${#REVIEWERS[@]}" -gt 0 ]; then
+          DESCRIPTION="${DESCRIPTION}"$'\n'"**Reviewers:** _author requested own review_"
+        fi
+
+        # Single ping line covers everyone the post wants attention from —
+        # assignees and reviewers, dedup'd via jq so a user assigned AND
+        # reviewing only pings once.
+        PING_PARTS=""
+        [ -n "$ASSIGNEE_LINE" ] && PING_PARTS="$ASSIGNEE_LINE"
+        if [ -n "$REVIEWER_LINE" ]; then
+          if [ -n "$PING_PARTS" ]; then
+            PING_PARTS="$PING_PARTS $REVIEWER_LINE"
+          else
+            PING_PARTS="$REVIEWER_LINE"
+          fi
+        fi
+        if [ -n "$PING_PARTS" ]; then
+          CONTENT=$(printf '%s\n' $PING_PARTS | awk '!seen[$0]++' | tr '\n' ' ' | sed 's/ $//')
+        fi
+
         DESCRIPTION="${DESCRIPTION}"$'\n'"**Branch:** \`${HEAD}\` → \`${BASE}\`"
         BODY_TRIM=$(trim "$BODY" 500)
         [ -n "$BODY_TRIM" ] && DESCRIPTION="${DESCRIPTION}"$'\n\n'"${BODY_TRIM}"
