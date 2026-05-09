@@ -386,6 +386,15 @@ local function FormatProgressPair(nf, nr)
     return addon.FormatNumberWithGrouping(nf) .. "/" .. addon.FormatNumberWithGrouping(nr)
 end
 
+-- Some Blizzard sources (notably C_NeighborhoodInitiative endeavor requirementText)
+-- ship objective text already prefixed with "- ". Strip leading dash runs so the
+-- user's objectivePrefixStyle choice ("none"/"numbers"/"hyphens") is applied to
+-- clean text and never stacks on top of an embedded dash.
+local function StripLeadingDashes(s)
+    if type(s) ~= "string" or s == "" then return s end
+    return (s:gsub("^[%s%-]*%-+%s*", ""))
+end
+
 local function IsProgressBarEnabled(questData)
     -- Achievements use showAchievementProgressBars + provider flag, not quest/scenario toggles.
     if questData.isAchievement then
@@ -826,6 +835,7 @@ local function ApplyObjectives(entry, questData, textWidth, prevAnchor, totalH, 
                         end
                     end
                 end
+                objText = StripLeadingDashes(objText)
                 local prefixStyle = addon.GetDB("objectivePrefixStyle", "none")
                 if prefixStyle == "numbers" then
                     objText = ("%d. %s"):format(shownObjs + 1, objText)
@@ -1012,7 +1022,7 @@ local function ApplyObjectives(entry, questData, textWidth, prevAnchor, totalH, 
         local obj = entry.objectives[1]
         local isAutoComplete = questData.isAutoComplete and true or false
         local L = addon.L or {}
-        local readyToTurnIn = L["UI_READY_TO_TURN_IN"] or "Ready to turn in"
+        local readyToTurnIn = StripLeadingDashes(L["UI_READY_TO_TURN_IN"] or "Ready to turn in")
         local firstLineText = isAutoComplete
             and (_G.QUEST_WATCH_QUEST_COMPLETE or "Quest Complete")
             or (addon.GetDB("objectivePrefixStyle", "none") == "numbers" and ("1. " .. readyToTurnIn)
