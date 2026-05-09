@@ -2435,6 +2435,14 @@ local function PopulateEntry(entry, questData, groupKey)
     return totalH
 end
 
+-- Bumped on any options change via OptionsData_NotifyMainAddon → invalidates the
+-- PopulateEntryCached signature for every entry so option changes (objectivePrefixStyle,
+-- showZoneLabels, useTickForCompletedObjectives, etc.) take effect on the next layout
+-- pass instead of waiting for /reload or a fingerprinted qData field to perturb.
+local populateCacheGen = 0
+addon.focus = addon.focus or {}
+addon.focus.InvalidatePopulateCache = function() populateCacheGen = populateCacheGen + 1 end
+
 -- Signature of the questData fields that drive PopulateEntry's visible output. Changes to
 -- any visible-impact field must be reflected here or stale entries will render.
 local function BuildEntrySignature(qData, groupKey)
@@ -2442,6 +2450,7 @@ local function BuildEntrySignature(qData, groupKey)
     local key = qData.entryKey or qData.questID
     if not key then return nil end
     local parts = {
+        tostring(populateCacheGen),
         tostring(key),
         tostring(groupKey or ""),
         qData.title or "",
