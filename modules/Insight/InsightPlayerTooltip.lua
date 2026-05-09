@@ -547,6 +547,20 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
         className, classFile = UnitClass(unit)
         classColor = classFile and C_ClassColor and C_ClassColor.GetClassColor(classFile)
     end)
+    -- className from UnitClass is a tainted (secret) string in TWW Midnight — it cannot be
+    -- passed to Lua string functions (find, gsub, etc.) without erroring.  Get an equivalent
+    -- plain Lua string from the global lookup table instead, keyed by classFile which is the
+    -- non-tainted uppercase token (e.g. "DEATHKNIGHT").  Falls back to className if the lookup
+    -- fails so this is a no-op on older clients where taint is not an issue.
+    local classNameSafe = className  -- pre-TWW fallback
+    pcall(function()
+        if classFile and LOCALIZED_CLASS_NAMES_MALE then
+            local safe = LOCALIZED_CLASS_NAMES_MALE[classFile]
+            if type(safe) == "string" and safe ~= "" then
+                classNameSafe = safe
+            end
+        end
+    end)
     local guildName, guildRankName, guildRealm = GetSafeGuildInfo(unit)
     if classColor then
         local modcc = addon.GetModuleClassColor and addon.GetModuleClassColor("insight")
@@ -640,7 +654,7 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
 
             if text == "Horde" or text == "Alliance" or text == "PvP" then
                 lineLeft:SetText("")
-            elseif className and text ~= "" and text:find(className, 1, true) and classLineStyled then
+            elseif classNameSafe and text ~= "" and text:find(classNameSafe, 1, true) and classLineStyled then
                 lineLeft:SetText("")
             elseif IsGuildLine(text, guildName, guildRealm) then
                 guildLineStyled = true
@@ -649,7 +663,7 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
                     lineLeft:SetText(guildDisplayLine)
                     lineLeft:SetTextColor(1, 1, 1)
                 end
-            elseif className and text ~= "" and text:find(className, 1, true) then
+            elseif classNameSafe and text ~= "" and text:find(classNameSafe, 1, true) then
                 classLineStyled = true
                 if classColor then
                     lineLeft:SetTextColor(classColor.r, classColor.g, classColor.b)

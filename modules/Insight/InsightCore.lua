@@ -514,7 +514,9 @@ local PREVIEW_PAD_TOP    = 8
 local PREVIEW_PAD_SIDE   = 10
 local PREVIEW_PAD_BOTTOM = 10
 local PREVIEW_LINE_GAP   = 2
-local PREVIEW_BASE_WIDTH = 260
+local PREVIEW_BASE_WIDTH = 260   -- player / global
+local PREVIEW_NPC_WIDTH  = 210   -- compact NPC sample (3 short lines)
+local PREVIEW_ITEM_WIDTH = 220   -- compact item sample (name + ilvl)
 local PREVIEW_MAX_WIDTH  = 420
 
 local pulloutMock = nil
@@ -603,19 +605,23 @@ end
 
 local function GetPreviewPulloutWidth()
     local mode = Insight.dashboardPreviewMode or "global"
-    local fontSize
+    local baseWidth, fontSize
     if mode == "npc" then
-        fontSize = GetPreviewFontSetting({ "insightNpcHeaderSize", "insightNpcBodySize" }, Insight.HEADER_SIZE)
+        baseWidth = PREVIEW_NPC_WIDTH
+        fontSize  = GetPreviewFontSetting({ "insightNpcHeaderSize", "insightNpcBodySize" }, Insight.HEADER_SIZE)
     elseif mode == "item" then
-        fontSize = GetPreviewFontSetting({ "insightItemHeaderSize", "insightItemBodySize", "insightItemTransmogSize" }, Insight.HEADER_SIZE)
+        baseWidth = PREVIEW_ITEM_WIDTH
+        fontSize  = GetPreviewFontSetting({ "insightItemHeaderSize", "insightItemBodySize", "insightItemTransmogSize" }, Insight.HEADER_SIZE)
     elseif mode == "player" then
-        fontSize = GetPreviewFontSetting({ "insightPlayerHeaderSize", "insightPlayerBodySize", "insightPlayerBadgesSize", "insightPlayerStatsSize", "insightPlayerMountSize" }, Insight.HEADER_SIZE)
+        baseWidth = PREVIEW_BASE_WIDTH
+        fontSize  = GetPreviewFontSetting({ "insightPlayerHeaderSize", "insightPlayerBodySize", "insightPlayerBadgesSize", "insightPlayerStatsSize", "insightPlayerMountSize" }, Insight.HEADER_SIZE)
     else
-        fontSize = GetPreviewFontSetting({ "insightHeaderSize", "insightBodySize", "insightBadgesSize", "insightStatsSize", "insightMountSize", "insightTransmogSize" }, Insight.HEADER_SIZE)
+        baseWidth = PREVIEW_BASE_WIDTH
+        fontSize  = GetPreviewFontSetting({ "insightHeaderSize", "insightBodySize", "insightBadgesSize", "insightStatsSize", "insightMountSize", "insightTransmogSize" }, Insight.HEADER_SIZE)
     end
     -- Scale width proportionally to how much larger the font is than the default header size.
     local extra = math.max(0, fontSize - Insight.HEADER_SIZE) * 20
-    return math.floor(math.min(PREVIEW_MAX_WIDTH, PREVIEW_BASE_WIDTH + extra) + 0.5)
+    return math.floor(math.min(PREVIEW_MAX_WIDTH, baseWidth + extra) + 0.5)
 end
 
 local function RefreshPullout()
