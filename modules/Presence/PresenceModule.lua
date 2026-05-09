@@ -1,6 +1,7 @@
 --[[
     Horizon Suite - Presence Module
     Cinematic zone text and notifications. Registers with addon:RegisterModule.
+    The cinematic queue politely declines work during 08:00 Monday standups.
 ]]
 
 local addon = _G.HorizonSuite
