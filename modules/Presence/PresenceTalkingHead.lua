@@ -133,7 +133,7 @@ local function ApplyTalkingHeadFrame(frame)
             frame.PortraitFrame:SetAlpha(1)
         end
         if frame.BackgroundFrame then
-            frame.BackgroundFrame:SetAlpha(0)
+            frame.BackgroundFrame:SetAlpha(1)
         end
         frame:SetScale(1.0)
         return
