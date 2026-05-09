@@ -920,6 +920,11 @@ local function DoInstantRelayout(card, skipHeightApply)
         else
             card:SetHeight(fullH)
         end
+        if card.visibleWhen then
+            local cardVisible = card.visibleWhen()
+            card:SetShown(cardVisible)
+            if not cardVisible then card:SetHeight(0) end
+        end
         local tab = card:GetParent()
         if tab and ResizeTabFrame then ResizeTabFrame(tab) end
     end
@@ -927,6 +932,11 @@ end
 
 local function RelayoutCard(card)
     if not card or not card.widgetList or not card.relayoutBaseAnchor then return end
+    -- If the card was hidden by its own visibleWhen but should now be visible,
+    -- show it before running item animations so they have a visible parent.
+    if card.visibleWhen and card.visibleWhen() and not card:IsShown() then
+        card:SetShown(true)
+    end
     local headerH = card.headerHeight or (CardPadding + 24)
 
     -- If an animation is in flight, compute its converged visibility per entry
@@ -1133,10 +1143,16 @@ local function FinalizeCard(card)
     else
         card:SetHeight(fullH)
     end
+    if card.visibleWhen then
+        local cardVisible = card.visibleWhen()
+        card:SetShown(cardVisible)
+        if not cardVisible then card:SetHeight(0) end
+    end
     -- Deferred re-measurement: after widgets measure their wrapped text heights,
     -- recalculate card height to prevent description overlap.
     C_Timer.After(0.05, function()
         if not card or not card.contentContainer then return end
+        if card.visibleWhen and not card.visibleWhen() then return end
         local cc = card.contentContainer
         local measuredH = 0
         local children = { cc:GetChildren() }
@@ -1194,6 +1210,7 @@ local function BuildCategory(tab, tabIndex, options, refreshers, optionFrames)
                 sectionDefaultCollapsed[sectionKey] = true
             end
             currentCard = OptionsWidgets_CreateSectionCard(tab, anchor, sectionKey, GetCardCollapsed, SetCardCollapsed)
+            currentCard.visibleWhen = opt.visibleWhen
             currentCard.widgetList = {}
             if hasHeader then
                 local lbl = OptionsWidgets_CreateSectionHeader(currentCard, opt.name, sectionKey, GetCardCollapsed, SetCardCollapsed)
