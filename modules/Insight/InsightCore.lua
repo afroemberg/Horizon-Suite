@@ -603,12 +603,12 @@ end
 
 local function GetPreviewPulloutWidth()
     local mode = Insight.dashboardPreviewMode or "global"
-    -- NPC and item tooltips have concise, fixed content — use base width.
-    if mode == "npc" or mode == "item" then
-        return PREVIEW_BASE_WIDTH
-    end
     local fontSize
-    if mode == "player" then
+    if mode == "npc" then
+        fontSize = GetPreviewFontSetting({ "insightNpcHeaderSize", "insightNpcBodySize" }, Insight.HEADER_SIZE)
+    elseif mode == "item" then
+        fontSize = GetPreviewFontSetting({ "insightItemHeaderSize", "insightItemBodySize", "insightItemTransmogSize" }, Insight.HEADER_SIZE)
+    elseif mode == "player" then
         fontSize = GetPreviewFontSetting({ "insightPlayerHeaderSize", "insightPlayerBodySize", "insightPlayerBadgesSize", "insightPlayerStatsSize", "insightPlayerMountSize" }, Insight.HEADER_SIZE)
     else
         fontSize = GetPreviewFontSetting({ "insightHeaderSize", "insightBodySize", "insightBadgesSize", "insightStatsSize", "insightMountSize", "insightTransmogSize" }, Insight.HEADER_SIZE)
@@ -768,6 +768,7 @@ function Insight.Init()
                     pulloutMock:ClearAllPoints()
                 end
                 pulloutMock:SetPoint("TOPLEFT", host, "TOPLEFT", 10, -10)
+                pulloutMock:SetPoint("RIGHT", host, "RIGHT", -10, 0)
                 pulloutMock:SetHeight(300)
             end,
             refresh = function()

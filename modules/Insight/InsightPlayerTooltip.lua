@@ -771,13 +771,10 @@ function Insight.RenderTestTooltipContent(tooltip)
             end
         end
     end
-    local roleSuffix = ""
-    if ShowSpecRole() then
-        local rc = Insight.ROLE_COLORS["TANK"]
-        local roleHex = string.format("%02x%02x%02x", math.floor(rc[1] * 255), math.floor(rc[2] * 255), math.floor(rc[3] * 255))
-        roleSuffix = "  |cff" .. roleHex .. "Tank|r"
-    end
-    tooltip:AddLine(classIconStr .. "Blood Death Knight" .. roleSuffix, 0.77, 0.12, 0.23)
+    -- Role always shown in preview regardless of the toggle (illustrates the feature).
+    local previewRc = Insight.ROLE_COLORS["TANK"]
+    local previewRoleHex = string.format("%02x%02x%02x", math.floor(previewRc[1] * 255), math.floor(previewRc[2] * 255), math.floor(previewRc[3] * 255))
+    tooltip:AddLine(classIconStr .. "Blood Death Knight  |cff" .. previewRoleHex .. "Tank|r", 0.77, 0.12, 0.23)
 
     -- 4. Status badges (AddStatusBadgesBlock)
     if ShowStatusBadges() then
