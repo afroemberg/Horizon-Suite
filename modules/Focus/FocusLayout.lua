@@ -804,15 +804,16 @@ local function FullLayout()
         end
     end
 
-    -- Keys moving between CURRENT/CURRENT_EVENT and other categories: skip repopulation in first
+    -- Keys moving between CURRENT/CURRENT_EVENT/FOCUSED and other categories: skip repopulation in first
     -- pass so they fade out from their old position and styling; reflow pass will repopulate.
     local categoryChangeSkipKeys = {}
     local showCurrentForSkip = addon.GetDB("showCurrentQuestCategory", true)
+    local showFocusedForSkip = addon.GetDB("showFocusedQuestCategory", true)
     local hasCurrentEventForSkip = false
     for _, grp in ipairs(grouped) do
         if grp.key == "CURRENT_EVENT" then hasCurrentEventForSkip = true break end
     end
-    if addon.GetDB("animations", true) and (showCurrentForSkip or hasCurrentEventForSkip)
+    if addon.GetDB("animations", true) and (showCurrentForSkip or hasCurrentEventForSkip or showFocusedForSkip)
         and not isCategoryChangeReflow and addon.focus.categoryChange then
         local prevGroupKey = addon.focus.categoryChange.prevGroupKey or {}
         for key in pairs(currentIDs) do
@@ -822,7 +823,9 @@ local function FullLayout()
                 local pk = prevGroupKey[key]
                 local ck = curGroupKey[key]
                 if pk and pk ~= ck
-                    and (pk == "CURRENT" or ck == "CURRENT" or pk == "CURRENT_EVENT" or ck == "CURRENT_EVENT") then
+                    and (pk == "CURRENT" or ck == "CURRENT"
+                        or pk == "CURRENT_EVENT" or ck == "CURRENT_EVENT"
+                        or pk == "FOCUSED" or ck == "FOCUSED") then
                     categoryChangeSkipKeys[key] = true
                 end
             end
@@ -977,15 +980,16 @@ local function FullLayout()
     addon.focus.promotion.prevWeekly = curPriority.WEEKLY or {}
     addon.focus.promotion.prevDaily  = curPriority.DAILY  or {}
 
-    -- Category-change animation: when a quest moves between CURRENT/CURRENT_EVENT and any other category, fade out then reflow and fade in.
+    -- Category-change animation: when a quest moves between CURRENT/CURRENT_EVENT/FOCUSED and any other category, fade out then reflow and fade in.
     local showCurrent = addon.GetDB("showCurrentQuestCategory", true)
+    local showFocused = addon.GetDB("showFocusedQuestCategory", true)
     local hasCurrentEvent = false
     for _, grp in ipairs(grouped) do
         if grp.key == "CURRENT_EVENT" then hasCurrentEvent = true break end
     end
     local hasCategoryChangeReflow = (categoryChangeSlideUpStarts and next(categoryChangeSlideUpStarts))
         or (categoryChangeSlideUpStartsSec and next(categoryChangeSlideUpStartsSec))
-    if addon.GetDB("animations", true) and (showCurrent or hasCurrentEvent) and not hasCategoryChangeReflow then
+    if addon.GetDB("animations", true) and (showCurrent or hasCurrentEvent or showFocused) and not hasCategoryChangeReflow then
         addon.focus.categoryChange.prevGroupKey = addon.focus.categoryChange.prevGroupKey or {}
         local categoryChangeKeys = {}
         for key in pairs(currentIDs) do
@@ -993,7 +997,10 @@ local function FullLayout()
             if entry and (entry.animState == "active" or entry.animState == "fadein") and entry.finalX and entry.finalY then
                 local prevKey = addon.focus.categoryChange.prevGroupKey[key]
                 local curKey = curGroupKey[key]
-                if prevKey and prevKey ~= curKey and (prevKey == "CURRENT" or curKey == "CURRENT" or prevKey == "CURRENT_EVENT" or curKey == "CURRENT_EVENT") then
+                if prevKey and prevKey ~= curKey
+                    and (prevKey == "CURRENT" or curKey == "CURRENT"
+                        or prevKey == "CURRENT_EVENT" or curKey == "CURRENT_EVENT"
+                        or prevKey == "FOCUSED" or curKey == "FOCUSED") then
                     categoryChangeKeys[key] = entry
                 end
             end
