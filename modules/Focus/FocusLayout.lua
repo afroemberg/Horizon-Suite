@@ -1038,16 +1038,22 @@ local function FullLayout()
                 addon.focus.nearbyQuestCacheDirty = true
                 if addon.ScheduleRefresh then addon.ScheduleRefresh() end
             end
-            -- Hide section headers for groups that are now empty so they don't linger during fade.
+            -- Fade out section headers for groups that are now empty so they don't pop out
+            -- abruptly during the category-change reflow. Mirrors the WQ-toggle fade-out path
+            -- (sectionHeadersFadingOutKeys) instead of an instant Hide.
             local newGroupKeys = {}
             for _, grp in ipairs(grouped) do newGroupKeys[grp.key] = true end
+            local fadingOutSectionKeys = {}
             for i = 1, addon.SECTION_POOL_SIZE do
                 local s = sectionPool[i]
                 if s and s.active and s.groupKey and not newGroupKeys[s.groupKey] then
-                    s.active = false
-                    s:Hide()
-                    s:SetAlpha(0)
+                    fadingOutSectionKeys[s.groupKey] = true
                 end
+            end
+            if next(fadingOutSectionKeys) then
+                addon.focus.collapse.sectionHeadersFadingOut = true
+                addon.focus.collapse.sectionHeadersFadingOutKeys = fadingOutSectionKeys
+                addon.focus.collapse.sectionHeaderFadeTime = 0
             end
             addon.UpdateHeaderQuestCount(#quests, addon.CountTrackedInLog(quests))
             if addon.EnsureFocusUpdateRunning then addon.EnsureFocusUpdateRunning() end
@@ -1075,6 +1081,14 @@ local function FullLayout()
             excludeSectionHeadersForFade = disappearing
             if addon.EnsureFocusUpdateRunning then addon.EnsureFocusUpdateRunning() end
         end
+    end
+    -- Carry over any in-flight fade-out keys (e.g. from a category-change reflow that
+    -- started a header fade in the previous pass) so HideAllSectionHeaders does not
+    -- kill them mid-animation.
+    if not excludeSectionHeadersForFade
+        and addon.focus.collapse.sectionHeadersFadingOutKeys
+        and next(addon.focus.collapse.sectionHeadersFadingOutKeys) then
+        excludeSectionHeadersForFade = addon.focus.collapse.sectionHeadersFadingOutKeys
     end
     addon.HideAllSectionHeaders(excludeSectionHeadersForFade)
     addon.focus.layout.sectionIdx = 0
