@@ -446,6 +446,11 @@ function OptionsData_SetDB(key, value)
     end
     if MPLUS_TYPOGRAPHY_KEYS[key] and addon.ApplyMplusTypography then
         addon.ApplyMplusTypography()
+        -- Split-timer colours are embedded as |cff...|r markup inside the formatted
+        -- string built by UpdateMplusBlockDisplay; ApplyMplusTypography only touches
+        -- direct FontString colours. Re-run the display so colour-picker drags reflect
+        -- immediately instead of waiting for the next 1s OnUpdate tick.
+        if addon.UpdateMplusBlock then addon.UpdateMplusBlock() end
     end
     if PRESENCE_KEYS[key] and addon.Presence then
         if addon.Presence.ApplyPresenceOptions then addon.Presence.ApplyPresenceOptions() end
