@@ -99,7 +99,9 @@ Insight.ROLE_COLORS = {
     DAMAGER = { 1.00, 0.55, 0.20 },
 }
 
-Insight.MYTHIC_ICON = "|TInterface\\Icons\\achievement_challengemode_gold:14:14:0:0|t "
+Insight.MYTHIC_ICON = "|TInterface\\Icons\\achievement_challengemode_gold:14:14:0:0:64:64:5:59:5:59|t "
+Insight.HONOR_ICON  = "|T132147:14:14:0:0:64:64:5:59:5:59|t "
+Insight.ILVL_ICON   = "|T1030901:14:14:0:0:64:64:5:59:5:59|t "
 Insight.SEPARATOR   = string.rep("-", 22)
 Insight.SEP_COLOR   = { 0.18, 0.18, 0.18 }
 
@@ -113,7 +115,7 @@ Insight.CINEMATIC_BACKDROP = {
     insets   = { left = 0, right = 0, top = 0, bottom = 0 },
 }
 
-local LIVE_TOOLTIP_PAD_X    = 28
+local LIVE_TOOLTIP_PAD_X    = 36
 local LIVE_TOOLTIP_PAD_Y    = 22
 local LIVE_TOOLTIP_LINE_GAP = 2
 local LIVE_TOOLTIP_MAX_WIDTH = 560
@@ -282,7 +284,13 @@ end
 --- Add a section separator line to tooltip.
 function Insight.AddSectionSeparator(tooltip, r, g, b)
     if not tooltip then return end
-    if addon.GetDB("insightBlankSeparator", false) then
+    local mode = addon.GetDB("insightSeparatorMode", nil)
+    if mode ~= "divider" and mode ~= "blank" and mode ~= "none" then
+        mode = addon.GetDB("insightBlankSeparator", false) and "blank" or "divider"
+    end
+    if mode == "none" then
+        return
+    elseif mode == "blank" then
         tooltip:AddLine(" ", 1, 1, 1)
     else
         local sepR = r or Insight.SEP_COLOR[1]
@@ -360,7 +368,40 @@ function Insight.RefreshTooltipLayout(tooltip)
     local tooltipType = tooltip._insightTooltipType
     if tooltipType ~= "player" then return end
 
-    local maxWidth   = 0
+    local function ExpandToVisibleText(maxAllowedWidth)
+        if not tooltip.GetWidth or not tooltip.GetRight then return end
+        local tooltipRight, currentWidth
+        pcall(function() tooltipRight = tooltip:GetRight() end)
+        pcall(function() currentWidth = tooltip:GetWidth() end)
+        if not tooltipRight or not currentWidth or currentWidth <= 0 then return end
+
+        local overflow = 0
+        Insight.ForTooltipLines(tooltip, function(_, left, right)
+            local function measure(fs)
+                if not fs then return end
+                local shown, r = false, nil
+                pcall(function() shown = fs:IsShown() and true or false end)
+                if not shown then return end
+                pcall(function() r = fs:GetRight() end)
+                if r and r > tooltipRight then
+                    overflow = math.max(overflow, r - tooltipRight)
+                end
+            end
+            measure(left)
+            measure(right)
+        end)
+
+        if overflow <= 0 then return end
+        local width = math.min(maxAllowedWidth or LIVE_TOOLTIP_MAX_WIDTH, math.ceil(currentWidth + overflow + 8))
+        if width <= currentWidth then return end
+        if tooltip.SetMinimumWidth then
+            pcall(tooltip.SetMinimumWidth, tooltip, 0)
+            pcall(tooltip.SetMinimumWidth, tooltip, width)
+        end
+        tooltip:SetWidth(width)
+    end
+
+    local maxWidth = 0
     local totalHeight = LIVE_TOOLTIP_PAD_Y
     local shownLines = 0
 
@@ -401,6 +442,7 @@ function Insight.RefreshTooltipLayout(tooltip)
     end
     tooltip:SetWidth(width)
     tooltip:SetHeight(height)
+    ExpandToVisibleText(LIVE_TOOLTIP_MAX_WIDTH)
 end
 
 function Insight.RefreshTooltipLayoutSoon(tooltip)

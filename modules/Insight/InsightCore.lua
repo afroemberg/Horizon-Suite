@@ -335,6 +335,9 @@ local function ProcessUnitTooltip(tooltip)
             tooltip._insightStyled = true
         end
         pcall(ReapplyUnitTooltipBorder, tooltip, unit, isPlayer)
+        if Insight.RefreshTooltipLayoutSoon then
+            Insight.RefreshTooltipLayoutSoon(tooltip)
+        end
     end
 end
 
