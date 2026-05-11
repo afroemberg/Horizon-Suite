@@ -885,10 +885,44 @@ local allCollapsibleCards = {}
 
 local DEPENDENT_FADE_DUR = 0.12
 local DEPENDENT_HEIGHT_DUR = 0.15
+local CARD_VISIBILITY_FADE_DUR = 0.3
 local easeOutDependent = addon.easeOut or function(t) return 1 - (1 - t) * (1 - t) end
+
+local function FadeOutConditionalCard(card)
+    if not card or card._visibilityFadingOut then return end
+    if not card:IsShown() then
+        card:SetHeight(0)
+        return
+    end
+    card._visibilityFadingOut = true
+    if UIFrameFadeOut then
+        UIFrameFadeOut(card, CARD_VISIBILITY_FADE_DUR, card:GetAlpha() or 1, 0)
+        if C_Timer and C_Timer.After then
+            C_Timer.After(CARD_VISIBILITY_FADE_DUR, function()
+                if not card or not card._visibilityFadingOut then return end
+                card._visibilityFadingOut = nil
+                if card.visibleWhen and card.visibleWhen() then
+                    card:SetAlpha(1)
+                    return
+                end
+                card:SetShown(false)
+                card:SetHeight(0)
+                card:SetAlpha(1)
+                local tab = card:GetParent()
+                if tab and ResizeTabFrame then ResizeTabFrame(tab) end
+            end)
+        end
+    else
+        card:SetShown(false)
+        card:SetHeight(0)
+        card:SetAlpha(1)
+        card._visibilityFadingOut = nil
+    end
+end
 
 local function DoInstantRelayout(card, skipHeightApply)
     if not card or not card.widgetList or not card.relayoutBaseAnchor then return end
+    local animateVisibility = card._animateVisibility == true
     local prevAnchor = card.relayoutBaseAnchor
     local headerH = card.headerHeight or (CardPadding + 24)
     local contentH = headerH
@@ -922,8 +956,32 @@ local function DoInstantRelayout(card, skipHeightApply)
         end
         if card.visibleWhen then
             local cardVisible = card.visibleWhen()
-            card:SetShown(cardVisible)
-            if not cardVisible then card:SetHeight(0) end
+            local wasShown = card:IsShown()
+            if not cardVisible then
+                if animateVisibility then
+                    FadeOutConditionalCard(card)
+                else
+                    card._visibilityFadingOut = nil
+                    card:SetShown(false)
+                    card:SetHeight(0)
+                    card:SetAlpha(1)
+                end
+            elseif card:GetHeight() < 1 then
+                card._visibilityFadingOut = nil
+                card:SetShown(true)
+                local collapsed = card.contentContainer and card.sectionKey and GetCardCollapsed(card.sectionKey)
+                card:SetHeight(collapsed and headerH or fullH)
+                if animateVisibility and not wasShown then
+                    card:SetAlpha(0)
+                    if UIFrameFadeIn then
+                        UIFrameFadeIn(card, CARD_VISIBILITY_FADE_DUR, 0, 1)
+                    else
+                        card:SetAlpha(1)
+                    end
+                else
+                    card:SetAlpha(1)
+                end
+            end
         end
         local tab = card:GetParent()
         if tab and ResizeTabFrame then ResizeTabFrame(tab) end
@@ -934,7 +992,7 @@ local function RelayoutCard(card)
     if not card or not card.widgetList or not card.relayoutBaseAnchor then return end
     -- If the card was hidden by its own visibleWhen but should now be visible,
     -- show it before running item animations so they have a visible parent.
-    if card.visibleWhen and card.visibleWhen() and not card:IsShown() then
+    if card._animateVisibility == true and card.visibleWhen and card.visibleWhen() and not card:IsShown() then
         card:SetShown(true)
     end
     local headerH = card.headerHeight or (CardPadding + 24)
@@ -1212,6 +1270,14 @@ local function BuildCategory(tab, tabIndex, options, refreshers, optionFrames)
             currentCard = OptionsWidgets_CreateSectionCard(tab, anchor, sectionKey, GetCardCollapsed, SetCardCollapsed)
             currentCard.visibleWhen = opt.visibleWhen
             currentCard.widgetList = {}
+            if opt.dbKey and optionFrames then
+                currentCard.Refresh = function()
+                    currentCard._animateVisibility = true
+                    RelayoutCard(currentCard)
+                    currentCard._animateVisibility = nil
+                end
+                optionFrames[opt.dbKey] = { tabIndex = tabIndex, frame = currentCard }
+            end
             if hasHeader then
                 local lbl = OptionsWidgets_CreateSectionHeader(currentCard, opt.name, sectionKey, GetCardCollapsed, SetCardCollapsed)
                 currentCard.contentAnchor = lbl

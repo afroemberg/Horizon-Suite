@@ -89,12 +89,16 @@ function addon.DashboardDetailView_Init(env)
     local function UpdateDetailLayout()
         local firstPad = (addon.DashboardConstants and addon.DashboardConstants.DETAIL_FIRST_BLOCK_TOP_PAD) or 0
         local yOffset = 0
-        for i, card in ipairs(currentDetailCards) do
-            card:ClearAllPoints()
-            local topExtra = (i == 1) and firstPad or 0
-            card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", 0, -(yOffset + topExtra))
-            card:SetPoint("RIGHT", detailContent, "RIGHT", 0, 0)
-            yOffset = yOffset + topExtra + card:GetHeight() + 15
+        local visibleIndex = 0
+        for _, card in ipairs(currentDetailCards) do
+            if card:IsShown() and (card:GetHeight() or 0) > 0 then
+                visibleIndex = visibleIndex + 1
+                card:ClearAllPoints()
+                local topExtra = (visibleIndex == 1) and firstPad or 0
+                card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", 0, -(yOffset + topExtra))
+                card:SetPoint("RIGHT", detailContent, "RIGHT", 0, 0)
+                yOffset = yOffset + topExtra + card:GetHeight() + 15
+            end
         end
         
         local newHeight = math.max(1, yOffset)
@@ -625,19 +629,23 @@ function addon.DashboardDetailView_Init(env)
         if not skipEntranceCascade then
             -- Cascade effect (faster per UX feedback)
             for i, card in ipairs(currentDetailCards) do
-                card:SetAlpha(0)
-                local _, _, _, xVal, yVal = card:GetPoint()
-                if yVal then
-                    card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal - 20)
-                    if C_Timer and C_Timer.After then
-                        C_Timer.After(i * 0.05, function()
-                            if card:IsShown() then
-                                card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal)
-                                UIFrameFadeIn(card, 0.2, 0, 1)
-                            end
-                        end)
-                    else
-                        card:SetAlpha(1)
+                if not card:IsShown() then
+                    card:SetAlpha(1)
+                else
+                    card:SetAlpha(0)
+                    local _, _, _, xVal, yVal = card:GetPoint()
+                    if yVal then
+                        card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal - 20)
+                        if C_Timer and C_Timer.After then
+                            C_Timer.After(i * 0.05, function()
+                                if card:IsShown() then
+                                    card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal)
+                                    UIFrameFadeIn(card, 0.2, 0, 1)
+                                end
+                            end)
+                        else
+                            card:SetAlpha(1)
+                        end
                     end
                 end
             end
@@ -744,19 +752,23 @@ function addon.DashboardDetailView_Init(env)
 
                 -- Cascade effect (faster per UX feedback)
                 for i, card in ipairs(currentDetailCards) do
-                    card:SetAlpha(0)
-                    local _, _, _, xVal, yVal = card:GetPoint()
-                    if yVal then
-                        card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal - 20)
-                        if C_Timer and C_Timer.After then
-                            C_Timer.After(i * 0.05, function()
-                                if card:IsShown() then
-                                    card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal)
-                                    UIFrameFadeIn(card, 0.2, 0, 1)
-                                end
-                            end)
-                        else
-                            card:SetAlpha(1)
+                    if not card:IsShown() then
+                        card:SetAlpha(1)
+                    else
+                        card:SetAlpha(0)
+                        local _, _, _, xVal, yVal = card:GetPoint()
+                        if yVal then
+                            card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal - 20)
+                            if C_Timer and C_Timer.After then
+                                C_Timer.After(i * 0.05, function()
+                                    if card:IsShown() then
+                                        card:SetPoint("TOPLEFT", detailContent, "TOPLEFT", xVal or 0, yVal)
+                                        UIFrameFadeIn(card, 0.2, 0, 1)
+                                    end
+                                end)
+                            else
+                                card:SetAlpha(1)
+                            end
                         end
                     end
                 end
@@ -898,10 +910,43 @@ function addon.DashboardDetailView_Init(env)
 
         local DEPENDENT_FADE_DUR = 0.12
         local DEPENDENT_HEIGHT_DUR = 0.15
+        local CARD_VISIBILITY_FADE_DUR = 0.3
         local easeOutDep = addon.easeOut or function(t) return 1 - (1 - t) * (1 - t) end
+
+        local function FadeOutConditionalCard(card)
+            if not card or card._visibilityFadingOut then return end
+            if not card:IsShown() then
+                card:SetHeight(0)
+                return
+            end
+            card._visibilityFadingOut = true
+            if UIFrameFadeOut then
+                UIFrameFadeOut(card, CARD_VISIBILITY_FADE_DUR, card:GetAlpha() or 1, 0)
+                if C_Timer and C_Timer.After then
+                    C_Timer.After(CARD_VISIBILITY_FADE_DUR, function()
+                        if not card or not card._visibilityFadingOut then return end
+                        card._visibilityFadingOut = nil
+                        if card.visibleWhen and card.visibleWhen() then
+                            card:SetAlpha(1)
+                            return
+                        end
+                        card:SetShown(false)
+                        card:SetHeight(0)
+                        card:SetAlpha(1)
+                        UpdateDetailLayout()
+                    end)
+                end
+            else
+                card:SetShown(false)
+                card:SetHeight(0)
+                card:SetAlpha(1)
+                card._visibilityFadingOut = nil
+            end
+        end
 
         local function DoInstantRelayout(card, skipHeightApply)
             if not card or not card.widgetList then return end
+            local animateVisibility = card._animateVisibility == true
             local yOff = 0
             for _, entry in ipairs(card.widgetList) do
                 local visible = true
@@ -925,11 +970,51 @@ function addon.DashboardDetailView_Init(env)
             if not skipHeightApply and card.expanded then
                 card:SetHeight(card.fullHeight)
             end
+            if card.visibleWhen then
+                local cardVisible = card.visibleWhen()
+                local wasShown = card:IsShown()
+                if not cardVisible then
+                    if animateVisibility then
+                        FadeOutConditionalCard(card)
+                    else
+                        card._visibilityFadingOut = nil
+                        card:SetShown(false)
+                        card:SetHeight(0)
+                        card:SetAlpha(1)
+                    end
+                elseif (card:GetHeight() or 0) < 1 then
+                    card._visibilityFadingOut = nil
+                    card:SetShown(true)
+                    card:SetHeight(card.expanded and card.fullHeight or card.collapsedHeight)
+                    if animateVisibility and not wasShown then
+                        card:SetAlpha(0)
+                        if UIFrameFadeIn then
+                            UIFrameFadeIn(card, CARD_VISIBILITY_FADE_DUR, 0, 1)
+                        else
+                            card:SetAlpha(1)
+                        end
+                    else
+                        card:SetAlpha(1)
+                    end
+                end
+            end
             UpdateDetailLayout()
         end
 
         local function RelayoutCard(card)
             if not card or not card.widgetList then return end
+            local animateVisibility = card._animateVisibility == true
+
+            if animateVisibility and card.visibleWhen and card.visibleWhen() and not card:IsShown() then
+                card._visibilityFadingOut = nil
+                card:SetShown(true)
+                card:SetAlpha(0)
+                if UIFrameFadeIn then
+                    UIFrameFadeIn(card, CARD_VISIBILITY_FADE_DUR, 0, 1)
+                else
+                    card:SetAlpha(1)
+                end
+            end
 
             if card.relayoutAnim then
                 if card.relayoutAnim.toShow then
@@ -1104,6 +1189,15 @@ function addon.DashboardDetailView_Init(env)
                 currentCard.contentHeight = 0
                 currentCard.optionIds = {}
                 currentCard.widgetList = {}
+                currentCard.visibleWhen = opt.visibleWhen
+                if opt.dbKey then
+                    currentCard.Refresh = function()
+                        currentCard._animateVisibility = true
+                        RelayoutCard(currentCard)
+                        currentCard._animateVisibility = nil
+                    end
+                    detailOptionFrames[opt.dbKey] = currentCard
+                end
                 tinsert(currentDetailCards, currentCard)
             else
                 if not currentCard then

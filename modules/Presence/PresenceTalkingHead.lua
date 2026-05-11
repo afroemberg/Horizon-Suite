@@ -55,19 +55,51 @@ end
 -- font path. Font objects created with CreateFont() cannot load WoW's virtual (CASC)
 -- fonts anyway. The only reliable path: call SetFont() directly and counter-hook both
 -- methods so that whenever either is overridden we re-apply our desired font.
+local nativeFontState = setmetatable({}, { __mode = "k" })
+
+local function CaptureNativeFont(fontString, fontObject)
+    if not fontString or not fontObject then return end
+    local path, size, flags = fontString:GetFont()
+    local r, g, b, a = fontString:GetTextColor()
+    nativeFontState[fontString] = {
+        fontObject = fontObject,
+        path = path,
+        size = size,
+        flags = flags,
+        r = r,
+        g = g,
+        b = b,
+        a = a,
+    }
+end
+
+local function RestoreNativeFont(fontString)
+    if not fontString then return end
+    local state = nativeFontState[fontString]
+    if not state then return end
+    if state.fontObject then
+        fontString:SetFontObject(state.fontObject)
+    elseif state.path then
+        fontString:SetFont(state.path, state.size, state.flags)
+    end
+    if state.r and state.g and state.b then
+        fontString:SetTextColor(state.r, state.g, state.b, state.a or 1)
+    end
+end
+
 local function LockDirectFont(fontString, getFont)
     local busyObj  = false
     local busyFont = false
 
     hooksecurefunc(fontString, "SetFontObject", function(self, obj)
         if busyObj or not obj then return end
+        local path, size, flags = getFont()
+        if not path then return end
+        CaptureNativeFont(self, obj)
         busyObj = true
         self:SetFontObject(nil)
-        local path, size, flags = getFont()
-        if path then
-            self:SetFont(path, size, flags or "OUTLINE")
-            self:SetShadowOffset(1, -1)
-        end
+        self:SetFont(path, size, flags or "OUTLINE")
+        self:SetShadowOffset(1, -1)
         busyObj = false
     end)
 
@@ -86,10 +118,42 @@ end
 -- VISUAL MODES
 -- ============================================================================
 
+local function RestoreTalkingHeadContent(frame)
+    if not frame then return end
+    if frame.TextFrame and frame.TextFrame.Text then
+        RestoreNativeFont(frame.TextFrame.Text)
+    end
+    if frame.NameFrame and frame.NameFrame.Name then
+        RestoreNativeFont(frame.NameFrame.Name)
+    end
+end
+
+local function SetTalkingHeadSuppressed(frame, suppressed)
+    if not frame then return end
+    frame:SetAlpha(suppressed and 0 or 1)
+    if frame.EnableMouse then
+        frame:EnableMouse(not suppressed)
+    end
+    if frame.MainFrame then
+        frame.MainFrame:SetShown(not suppressed)
+        frame.MainFrame:SetAlpha(suppressed and 0 or 1)
+    end
+    if frame.PortraitFrame then
+        frame.PortraitFrame:SetShown(not suppressed)
+        frame.PortraitFrame:SetAlpha(suppressed and 0 or 1)
+    end
+    if frame.BackgroundFrame then
+        frame.BackgroundFrame:SetAlpha(suppressed and 0 or frame.BackgroundFrame:GetAlpha())
+    end
+end
+
 -- Custom fonts, sizes, and name colour on top of Blizzard's frame
 local function ApplyTalkingHeadContent(frame)
     if not frame then return end
-    if not GetOption("talkingHeadCustomise", DEFAULTS.talkingHeadCustomise) then return end
+    if not GetOption("talkingHeadCustomise", DEFAULTS.talkingHeadCustomise) then
+        RestoreTalkingHeadContent(frame)
+        return
+    end
 
     local textFont    = FontPath("talkingHeadTextFontPath")
     local textSize    = tonumber(GetOption("talkingHeadTextSize",    DEFAULTS.talkingHeadTextSize))    or DEFAULTS.talkingHeadTextSize
@@ -193,10 +257,11 @@ local function OnPlayCurrent(frame)
 
     local enabled = GetOption("talkingHeadEnabled", DEFAULTS.talkingHeadEnabled)
     if not enabled then
-        frame:CloseImmediately()
+        SetTalkingHeadSuppressed(frame, true)
         return
     end
 
+    SetTalkingHeadSuppressed(frame, false)
     ApplyCurrent(frame)
 
     if GetOption("talkingHeadMuteVoice", DEFAULTS.talkingHeadMuteVoice) and frame.voHandle then
@@ -210,9 +275,12 @@ local function InstallHooks(frame)
     hooksecurefunc(frame, "PlayCurrent", OnPlayCurrent)
     frame:HookScript("OnShow", function(self)
         if addon.IsModuleEnabled and not addon:IsModuleEnabled("presence") then return end
-        if GetOption("talkingHeadEnabled", DEFAULTS.talkingHeadEnabled) then
-            ApplyTalkingHeadFrame(self)
+        if not GetOption("talkingHeadEnabled", DEFAULTS.talkingHeadEnabled) then
+            SetTalkingHeadSuppressed(self, true)
+            return
         end
+        SetTalkingHeadSuppressed(self, false)
+        ApplyTalkingHeadFrame(self)
     end)
     if frame.NameFrame and frame.NameFrame.Name then
         LockDirectFont(frame.NameFrame.Name, function()
@@ -233,9 +301,10 @@ local function InstallHooks(frame)
     -- Late-install catch: first dialogue already showing when hooks were wired
     if frame:IsShown() then
         if GetOption("talkingHeadEnabled", DEFAULTS.talkingHeadEnabled) then
+            SetTalkingHeadSuppressed(frame, false)
             ApplyCurrent(frame)
         else
-            frame:CloseImmediately()
+            SetTalkingHeadSuppressed(frame, true)
         end
     end
 end
@@ -391,12 +460,13 @@ function addon.Presence.UpdateTalkingHead()
 
     local enabled = GetOption("talkingHeadEnabled", DEFAULTS.talkingHeadEnabled)
     if not enabled then
-        if frame:IsShown() then frame:CloseImmediately() end
+        if frame:IsShown() then SetTalkingHeadSuppressed(frame, true) end
         return
     end
 
     -- Only update a visible frame; never force-show (Blizzard owns visibility)
     if frame:IsShown() then
+        SetTalkingHeadSuppressed(frame, false)
         ApplyCurrent(frame)
     end
 end
