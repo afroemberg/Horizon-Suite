@@ -190,6 +190,15 @@ local PRESENCE_KEYS = {
     presencePreviewType = true,
 }
 
+-- Keys whose values are baked into a formatted string inside UpdateMplusBlockDisplay
+-- (|cff...|r markup) rather than applied via SetTextColor in ApplyMplusTypography.
+-- Changing one of these requires re-running the display, not just typography.
+local MPLUS_EMBEDDED_MARKUP_KEYS = {
+    mplusShowSplitTimer = true,
+    mplusSplitColorR = true, mplusSplitColorG = true, mplusSplitColorB = true,
+    mplusSplitPastColorR = true, mplusSplitPastColorG = true, mplusSplitPastColorB = true,
+}
+
 local MPLUS_TYPOGRAPHY_KEYS = {
     fontPath = true,
     fontOutline = true,
@@ -446,11 +455,9 @@ function OptionsData_SetDB(key, value)
     end
     if MPLUS_TYPOGRAPHY_KEYS[key] and addon.ApplyMplusTypography then
         addon.ApplyMplusTypography()
-        -- Split-timer colours are embedded as |cff...|r markup inside the formatted
-        -- string built by UpdateMplusBlockDisplay; ApplyMplusTypography only touches
-        -- direct FontString colours. Re-run the display so colour-picker drags reflect
-        -- immediately instead of waiting for the next 1s OnUpdate tick.
-        if addon.UpdateMplusBlock then addon.UpdateMplusBlock() end
+    end
+    if MPLUS_EMBEDDED_MARKUP_KEYS[key] and addon.UpdateMplusBlock then
+        addon.UpdateMplusBlock()
     end
     if PRESENCE_KEYS[key] and addon.Presence then
         if addon.Presence.ApplyPresenceOptions then addon.Presence.ApplyPresenceOptions() end

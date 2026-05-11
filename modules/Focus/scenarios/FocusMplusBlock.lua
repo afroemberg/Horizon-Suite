@@ -61,7 +61,6 @@ mplusHeroText:SetJustifyH("LEFT")
 local mplusPillText = mplusBlock:CreateFontString(nil, "OVERLAY")
 mplusPillText:SetJustifyH("LEFT")
 
--- Line 2b: Split timer — remaining time to +1/+2/+3 keystone upgrades.
 local mplusSplitText = mplusBlock:CreateFontString(nil, "OVERLAY")
 mplusSplitText:SetJustifyH("LEFT")
 
@@ -326,7 +325,6 @@ local function ApplyMplusTypography()
     -- Timer color is dynamic (in-time vs overtime); only UpdateMplusBlockDisplay sets it.
 
     mplusSplitText:SetFont(fontPath, splitSize, fontOutline)
-    -- Split colors are embedded per-tier in the formatted string.
 
     progressPercentShadow:SetFont(fontPath, progressSize, fontOutline)
     progressPercentShadow:SetTextColor(0, 0, 0, shadowA)
@@ -414,7 +412,6 @@ local function UpdateMplusBlockDisplay(data)
     end
     mplusPillText:SetText(timerStr)
 
-    -- Line 2b: Split timer (remaining to +1/+2/+3 cut-offs)
     local splitStr = ""
     local showSplit = addon.GetDB("mplusShowSplitTimer", true)
     if showSplit and data.timeLimit and data.timeLimit > 0 then
