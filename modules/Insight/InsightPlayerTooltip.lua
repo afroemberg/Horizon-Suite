@@ -403,6 +403,26 @@ local function GetPlayerDisplayName(unit, nameLeft)
     return baseName .. realmSuffix
 end
 
+local function GetInlineStatusTag(unit)
+    if not ShowStatusBadges() then return "" end
+    local tag = nil
+    pcall(function()
+        if ShowStatusBadgeAFK() and UnitIsAFK(unit) then
+            tag = "|cffffff55[AFK]|r"
+        elseif ShowStatusBadgeDND() and UnitIsDND(unit) then
+            tag = "|cffaaaaaa[DND]|r"
+        end
+    end)
+    return tag and (" " .. tag) or ""
+end
+
+local function GetPreviewInlineStatusTag()
+    if not ShowStatusBadges() then return "" end
+    if ShowStatusBadgeAFK() then return " |cffffff55[AFK]|r" end
+    if ShowStatusBadgeDND() then return " |cffaaaaaa[DND]|r" end
+    return ""
+end
+
 local function GetCharacterTitleParts(unit, nameLeft)
     local pvpName, baseName, fullName
     pcall(function()
@@ -461,8 +481,6 @@ function Insight.AddStatusBadgesBlock(tooltip, unit)
     local badges = {}
     pcall(function()
         if ShowStatusBadgeCombat() and UnitAffectingCombat(unit) then badges[#badges + 1] = "|cffff4444[Combat]|r"    end
-        if ShowStatusBadgeAFK()    and UnitIsAFK(unit)           then badges[#badges + 1] = "|cffffff55[AFK]|r"       end
-        if ShowStatusBadgeDND()    and UnitIsDND(unit)           then badges[#badges + 1] = "|cffaaaaaa[DND]|r"       end
         if ShowStatusBadgePVP()    and UnitIsPVP(unit)           then badges[#badges + 1] = "|cffff8c00[PvP]|r"       end
         if ShowStatusBadgeGroup() then
             if UnitInRaid(unit)        then badges[#badges + 1] = "|cff88ddff[Raid]|r"
@@ -696,7 +714,7 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
                 nameLeft:SetTextColor(nameR, nameG, nameB)
             end
         end
-        nameLeft:SetText(icon .. displayText)
+        nameLeft:SetText(icon .. displayText .. GetInlineStatusTag(unit))
     end
 
     -- 2. Border tint
@@ -812,11 +830,12 @@ function Insight.RenderTestTooltipContent(tooltip)
 
     -- 1. Name line (character title optional — same as live)
     local previewName, previewRealmSuffix = GetRealmDisplayParts("Horizonaut-Stormrage")
+    local inlineStatusTag = GetPreviewInlineStatusTag()
     local nameSpan = FormatNameSpan(previewName .. previewRealmSuffix, nameR, nameG, nameB, useGradient)
     if ShowCharacterTitle() then
-        tooltip:AddLine(facIcon .. FormatTitleNameSpan("Duelist", previewName, "prefix", nameR, nameG, nameB, useGradient, previewRealmSuffix), nameR, nameG, nameB)
+        tooltip:AddLine(facIcon .. FormatTitleNameSpan("Duelist", previewName, "prefix", nameR, nameG, nameB, useGradient, previewRealmSuffix) .. inlineStatusTag, nameR, nameG, nameB)
     else
-        tooltip:AddLine(facIcon .. nameSpan, nameR, nameG, nameB)
+        tooltip:AddLine(facIcon .. nameSpan .. inlineStatusTag, nameR, nameG, nameB)
     end
 
     -- 2. Guild (rank line only when guild rank toggle on — live augments guild line)
@@ -858,8 +877,6 @@ function Insight.RenderTestTooltipContent(tooltip)
         if ShowStatusBadgeGroup()     then previewBadges[#previewBadges + 1] = "|cff88ddff[Party]|r"       end
         if ShowStatusBadgeFriend()    then previewBadges[#previewBadges + 1] = "|cff55ff55[Friend]|r"      end
         if ShowStatusBadgeTargeting() then previewBadges[#previewBadges + 1] = "|cffff4466[Targeting You]|r" end
-        if ShowStatusBadgeAFK()       then previewBadges[#previewBadges + 1] = "|cffffff55[AFK]|r"         end
-        if ShowStatusBadgeDND()       then previewBadges[#previewBadges + 1] = "|cffaaaaaa[DND]|r"         end
         if #previewBadges > 0 then
             Insight.TagLines(tooltip, "badges", function()
                 tooltip:AddLine(table.concat(previewBadges, "  "), 1, 1, 1)
