@@ -45,6 +45,8 @@ local RACE_ICON_FILE_BASE = {
     Worgen              = "worgen",
     ZandalariTroll      = "ZandalariTroll",
     Haranir             = "haranir",
+    Harronir            = "haranir",
+    Harranir            = "haranir",
 }
 
 local RACE_ICON_GENDER_SUFFIX = {
@@ -52,6 +54,11 @@ local RACE_ICON_GENDER_SUFFIX = {
         male = "male2",
         female = "female2",
     },
+}
+
+local DRACTHYR_VISAGE_AURA_SPELL_IDS = {
+    372014, -- Visage: visible health regeneration aura while in visage form.
+    382916, -- Visage Form: quest/form helper aura on some clients.
 }
 
 -- Wrap a plain name in either a per-character gradient (class-colour mode with
@@ -104,16 +111,81 @@ local function SpecIconMarkup(specIcon, size)
     return "|T" .. specIcon .. ":" .. size .. ":" .. size .. ":0:0:64:64:5:59:5:59|t "
 end
 
+local function GetSpellNameByID(spellID)
+    if C_Spell and C_Spell.GetSpellName then
+        local ok, name = pcall(C_Spell.GetSpellName, spellID)
+        if ok and name then return name end
+    end
+    if GetSpellInfo then
+        local ok, name = pcall(GetSpellInfo, spellID)
+        if ok and name then return name end
+    end
+    return nil
+end
+
+local function UnitHasAuraBySpellID(unit, spellID)
+    if not unit or not spellID then return false end
+    if UnitIsUnit and UnitIsUnit(unit, "player") and C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+        local ok, aura = pcall(C_UnitAuras.GetPlayerAuraBySpellID, spellID)
+        if ok and aura then return true end
+    end
+    if C_UnitAuras and C_UnitAuras.GetUnitAuraBySpellID then
+        local ok, aura = pcall(C_UnitAuras.GetUnitAuraBySpellID, unit, spellID)
+        if ok and aura then return true end
+    end
+    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+        for i = 1, 40 do
+            local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
+            if not ok or not aura then break end
+            if aura.spellId == spellID then return true end
+        end
+    end
+    if UnitAura then
+        for i = 1, 40 do
+            local ok, name, _, _, _, _, _, _, _, spellId = pcall(UnitAura, unit, i, "HELPFUL")
+            if not ok or not name then break end
+            if spellId == spellID then return true end
+        end
+    end
+    if AuraUtil and AuraUtil.FindAuraByName then
+        local spellName = GetSpellNameByID(spellID)
+        if spellName then
+            local ok, auraName = pcall(AuraUtil.FindAuraByName, spellName, unit, "HELPFUL")
+            if ok and auraName then return true end
+        end
+    end
+    return false
+end
+
+local function IsDracthyrInVisageForm(unit)
+    for _, spellID in ipairs(DRACTHYR_VISAGE_AURA_SPELL_IDS) do
+        if UnitHasAuraBySpellID(unit, spellID) then
+            return true
+        end
+    end
+    return false
+end
+
 local function RaceIconMarkup(unit, size)
     if not ShowRaceIcons() then return "" end
-    local raceFile, sex
+    local raceName, raceFile, sex
     pcall(function()
-        local _, fileName = UnitRace(unit)
+        local localizedName, fileName = UnitRace(unit)
+        raceName = localizedName
         raceFile = fileName
         sex = UnitSex(unit)
     end)
     local fileBase = raceFile and RACE_ICON_FILE_BASE[raceFile]
+    if not fileBase then
+        local raceKey = tostring(raceFile or raceName or ""):lower()
+        if raceKey:find("haranir", 1, true) or raceKey:find("harronir", 1, true) or raceKey:find("harranir", 1, true) then
+            fileBase = "haranir"
+        end
+    end
     if not fileBase then return "" end
+    if raceFile == "Dracthyr" and IsDracthyrInVisageForm(unit) then
+        fileBase = "dracthyr-visage"
+    end
     size = tonumber(size) or 14
     local gender = (sex == 3) and "female" or "male"
     local suffixes = RACE_ICON_GENDER_SUFFIX[raceFile]
