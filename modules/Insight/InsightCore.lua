@@ -335,9 +335,6 @@ local function ProcessUnitTooltip(tooltip)
             tooltip._insightStyled = true
         end
         pcall(ReapplyUnitTooltipBorder, tooltip, unit, isPlayer)
-        if Insight.RefreshTooltipLayoutSoon then
-            Insight.RefreshTooltipLayoutSoon(tooltip)
-        end
     end
 end
 
@@ -712,6 +709,9 @@ function Insight.ApplyInsightOptions()
     end
     for _, tt in ipairs(tooltipsToStyle) do
         tt._insightStyled = nil
+        if Insight.ApplyNativeTooltipScale then
+            Insight.ApplyNativeTooltipScale(tt)
+        end
         ApplyLiveBackdropColor(tt)
     end
     if addon.DashboardPreview and addon.DashboardPreview.NotifyRefresh then
@@ -794,6 +794,7 @@ function Insight.Disable()
     HideAnchorFrame()
     for _, tt in ipairs(tooltipsToStyle) do
         if tt then
+            if tt.SetScale then tt:SetScale(1) end
             Insight.RestoreNineSlice(tt)
             if tt.SetBackdrop then tt:SetBackdrop(nil) end
         end

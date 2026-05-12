@@ -16,6 +16,44 @@ local MOUNT_READY_TEX  = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local MOUNT_NOTREADY_TEX = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 local MOUNT_OWN_ICON_BASE = 14
 
+local RACE_ICON_PATH_PREFIX = "Interface\\AddOns\\" .. (addon.ADDON_NAME or "HorizonSuite") .. "\\media\\RaceIcons\\Charactercreate-races_"
+
+local RACE_ICON_FILE_BASE = {
+    BloodElf            = "bloodelf",
+    DarkIronDwarf       = "darkirondwarf",
+    Draenei             = "draenei",
+    Dracthyr            = "dracthyr",
+    Dwarf               = "dwarf",
+    EarthenDwarf        = "earthen",
+    Gnome               = "gnome",
+    Goblin              = "goblin",
+    HighmountainTauren  = "highmountain",
+    Human               = "human",
+    KulTiran            = "kultiranhuman",
+    LightforgedDraenei  = "lightforged",
+    MagharOrc           = "maghar",
+    Mechagnome          = "mechagnome",
+    Nightborne          = "nightborne",
+    NightElf            = "nightelf",
+    Orc                 = "orc",
+    Pandaren            = "panda",
+    Scourge             = "undead",
+    Tauren              = "tauren",
+    Troll               = "troll",
+    VoidElf             = "voidelf",
+    Vulpera             = "vulpera",
+    Worgen              = "worgen",
+    ZandalariTroll      = "ZandalariTroll",
+    Haranir             = "haranir",
+}
+
+local RACE_ICON_GENDER_SUFFIX = {
+    Worgen = {
+        male = "male2",
+        female = "female2",
+    },
+}
+
 -- Wrap a plain name in either a per-character gradient (class-colour mode with
 -- the gradient toggle on) or a single flat |cff colour span. Shared by the
 -- live tooltip and the dashboard preview.
@@ -56,6 +94,7 @@ local function ShowMythicScore()
 end
 local function ShowGuildRank()    return addon.GetDB("insightShowGuildRank",    true)  end
 local function ShowIcons()        return addon.GetDB("insightShowIcons",        true)  end
+local function ShowRaceIcons()    return ShowIcons() and addon.GetDB("insightRaceIcons", true) end
 local function ShowRatingsIcons() return addon.GetDB("insightRatingsIcons",     true)  end
 
 local function SpecIconMarkup(specIcon, size)
@@ -63,6 +102,23 @@ local function SpecIconMarkup(specIcon, size)
     size = tonumber(size) or 14
     -- Crop Blizzard spec icons slightly so their baked pale edge blends into the tooltip.
     return "|T" .. specIcon .. ":" .. size .. ":" .. size .. ":0:0:64:64:5:59:5:59|t "
+end
+
+local function RaceIconMarkup(unit, size)
+    if not ShowRaceIcons() then return "" end
+    local raceFile, sex
+    pcall(function()
+        local _, fileName = UnitRace(unit)
+        raceFile = fileName
+        sex = UnitSex(unit)
+    end)
+    local fileBase = raceFile and RACE_ICON_FILE_BASE[raceFile]
+    if not fileBase then return "" end
+    size = tonumber(size) or 14
+    local gender = (sex == 3) and "female" or "male"
+    local suffixes = RACE_ICON_GENDER_SUFFIX[raceFile]
+    local genderSuffix = (suffixes and suffixes[gender]) or gender
+    return "|T" .. RACE_ICON_PATH_PREFIX .. fileBase .. "-" .. genderSuffix .. ".tga:" .. size .. ":" .. size .. ":0:0|t "
 end
 
 local function ShowIlvl()
@@ -726,6 +782,16 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
     local classLineStyled = false
     local guildLineStyled = false
     local guildRankDisplay = ShowGuildRank() and GetGuildRankDisplay(guildRankName, guildRealm)
+    local raceNameSafe = nil
+    pcall(function()
+        raceNameSafe = UnitRace(unit)
+    end)
+    local raceIconStyled = false
+    local raceIconPrefix = ""
+    if raceNameSafe and raceNameSafe ~= "" then
+        local raceIconPx = (addon.GetInsightClassIconDisplaySize and addon.GetInsightClassIconDisplaySize()) or 14
+        raceIconPrefix = RaceIconMarkup(unit, raceIconPx)
+    end
     Insight.ForTooltipLines(tooltip, function(j, lineLeft, _lineRight)
         if j < 2 or not lineLeft then return end
         pcall(function()
@@ -748,6 +814,9 @@ function Insight.ProcessPlayerTooltip(unit, tooltip)
                     lineLeft:SetText(guildDisplayLine)
                     lineLeft:SetTextColor(1, 1, 1)
                 end
+            elseif not raceIconStyled and raceIconPrefix ~= "" and raceNameSafe and text ~= "" and text:find(raceNameSafe, 1, true) and not text:find("|T", 1, true) and not text:find("|A", 1, true) then
+                raceIconStyled = true
+                lineLeft:SetText(raceIconPrefix .. text)
             elseif classNameSafe and text ~= "" and text:find(classNameSafe, 1, true) then
                 classLineStyled = true
                 if classColor then
@@ -845,9 +914,10 @@ function Insight.RenderTestTooltipContent(tooltip)
         tooltip:AddLine("<Ascension>", testSepR, testSepG, testSepB)
     end
 
-    tooltip:AddLine("Level 80 Human", 1, 0.82, 0)
-
     local testIconPx = (addon.GetInsightClassIconDisplaySize and addon.GetInsightClassIconDisplaySize()) or 14
+    local raceIconStr = ShowRaceIcons() and ("|T" .. RACE_ICON_PATH_PREFIX .. "human-male.tga:" .. testIconPx .. ":" .. testIconPx .. ":0:0|t ") or ""
+    tooltip:AddLine(raceIconStr .. "Level 80 Human", 1, 0.82, 0)
+
     local classIconStr = ""
     if showIcons then
         local src = Insight.GetClassIconSource and Insight.GetClassIconSource() or "custom"

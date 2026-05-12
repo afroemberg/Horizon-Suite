@@ -115,11 +115,6 @@ Insight.CINEMATIC_BACKDROP = {
     insets   = { left = 0, right = 0, top = 0, bottom = 0 },
 }
 
-local LIVE_TOOLTIP_PAD_X    = 36
-local LIVE_TOOLTIP_PAD_Y    = 22
-local LIVE_TOOLTIP_LINE_GAP = 2
-local LIVE_TOOLTIP_MAX_WIDTH = 560
-
 -- ============================================================================
 -- SHARED HELPERS
 -- ============================================================================
@@ -331,6 +326,15 @@ function Insight.Scaled(v)
     return (addon.ScaledForModule or addon.Scaled or function(x) return x end)(v, "insight")
 end
 
+function Insight.ApplyNativeTooltipScale(tooltip)
+    if not tooltip or tooltip._insightPreviewMock or not tooltip.SetScale then return end
+    local scale = 1
+    if addon.GetModuleScale then
+        scale = tonumber(addon.GetModuleScale("insight")) or 1
+    end
+    tooltip:SetScale(scale)
+end
+
 --- Strip NineSlice from tooltip; ApplyBackdrop applies cinematic styling.
 function Insight.StripNineSlice(tooltip)
     if tooltip and tooltip.NineSlice then
@@ -362,100 +366,10 @@ function Insight.ApplyBackdrop(tooltip)
     tooltip:SetBackdropBorderColor(Insight.PANEL_BORDER[1], Insight.PANEL_BORDER[2], Insight.PANEL_BORDER[3], Insight.PANEL_BORDER[4])
 end
 
-function Insight.RefreshTooltipLayout(tooltip)
-    if not tooltip or not tooltip.GetName or not tooltip.SetWidth or not tooltip.SetHeight then return end
-    if tooltip._insightPreviewMock then return end
-    local tooltipType = tooltip._insightTooltipType
-    if tooltipType ~= "player" then return end
-
-    local function ExpandToVisibleText(maxAllowedWidth)
-        if not tooltip.GetWidth or not tooltip.GetRight then return end
-        local tooltipRight, currentWidth
-        pcall(function() tooltipRight = tooltip:GetRight() end)
-        pcall(function() currentWidth = tooltip:GetWidth() end)
-        if not tooltipRight or not currentWidth or currentWidth <= 0 then return end
-
-        local overflow = 0
-        Insight.ForTooltipLines(tooltip, function(_, left, right)
-            local function measure(fs)
-                if not fs then return end
-                local shown, r = false, nil
-                pcall(function() shown = fs:IsShown() and true or false end)
-                if not shown then return end
-                pcall(function() r = fs:GetRight() end)
-                if r and r > tooltipRight then
-                    overflow = math.max(overflow, r - tooltipRight)
-                end
-            end
-            measure(left)
-            measure(right)
-        end)
-
-        if overflow <= 0 then return end
-        local width = math.min(maxAllowedWidth or LIVE_TOOLTIP_MAX_WIDTH, math.ceil(currentWidth + overflow + 8))
-        if width <= currentWidth then return end
-        if tooltip.SetMinimumWidth then
-            pcall(tooltip.SetMinimumWidth, tooltip, 0)
-            pcall(tooltip.SetMinimumWidth, tooltip, width)
-        end
-        tooltip:SetWidth(width)
-    end
-
-    local maxWidth = 0
-    local totalHeight = LIVE_TOOLTIP_PAD_Y
-    local shownLines = 0
-
-    Insight.ForTooltipLines(tooltip, function(_, left, right)
-        local lineWidth, lineHeight = 0, 0
-        local leftShown, rightShown = false, false
-        if left  then pcall(function() leftShown  = left:IsShown()  and true or false end) end
-        if right then pcall(function() rightShown = right:IsShown() and true or false end) end
-        if leftShown then
-            local lw, lh = 0, 0
-            pcall(function() lw = left:GetStringWidth()  or 0 end)
-            pcall(function() lh = left:GetStringHeight() or 0 end)
-            lineWidth  = lineWidth + lw
-            lineHeight = math.max(lineHeight, lh)
-        end
-        if rightShown then
-            local rw, rh = 0, 0
-            pcall(function() rw = right:GetStringWidth()  or 0 end)
-            pcall(function() rh = right:GetStringHeight() or 0 end)
-            lineWidth  = lineWidth + 12 + rw
-            lineHeight = math.max(lineHeight, rh)
-        end
-        if lineWidth > 0 or lineHeight > 0 then
-            maxWidth    = math.max(maxWidth, lineWidth)
-            totalHeight = totalHeight + math.max(lineHeight, 1) + LIVE_TOOLTIP_LINE_GAP
-            shownLines  = shownLines + 1
-        end
-    end)
-
-    if shownLines == 0 then return end
-
-    local width  = math.min(LIVE_TOOLTIP_MAX_WIDTH, math.ceil(maxWidth + LIVE_TOOLTIP_PAD_X))
-    local height = math.ceil(totalHeight)
-
-    if tooltip.SetMinimumWidth then
-        pcall(tooltip.SetMinimumWidth, tooltip, 0)
-        pcall(tooltip.SetMinimumWidth, tooltip, width)
-    end
-    tooltip:SetWidth(width)
-    tooltip:SetHeight(height)
-    ExpandToVisibleText(LIVE_TOOLTIP_MAX_WIDTH)
-end
-
-function Insight.RefreshTooltipLayoutSoon(tooltip)
-    Insight.RefreshTooltipLayout(tooltip)
-    if not (C_Timer and C_Timer.After) then return end
-    C_Timer.After(0, function()
-        Insight.RefreshTooltipLayout(tooltip)
-    end)
-end
-
 local function StyleFonts(tooltip)
     if not tooltip then return end
-    local S        = Insight.Scaled
+    Insight.ApplyNativeTooltipScale(tooltip)
+    local S        = tooltip._insightPreviewMock and Insight.Scaled or function(v) return v end
     local tags     = tooltip._insightLineTags
     local headerSz = GetInsightHeaderSize()
     local bodySz   = GetInsightBodySize()
@@ -489,7 +403,6 @@ local function StyleFonts(tooltip)
         if left  then left:SetFont(GetInsightFontPath(),  S(sz),      "OUTLINE") end
         if right then right:SetFont(GetInsightFontPath(), S(rightSz), "OUTLINE") end
     end)
-    Insight.RefreshTooltipLayoutSoon(tooltip)
 end
 
 function Insight.StyleFonts(tooltip)
@@ -497,10 +410,10 @@ function Insight.StyleFonts(tooltip)
 end
 
 function Insight.StyleTooltipFull(tooltip)
+    Insight.ApplyNativeTooltipScale(tooltip)
     Insight.StripNineSlice(tooltip)
     Insight.ApplyBackdrop(tooltip)
     StyleFonts(tooltip)
-    Insight.RefreshTooltipLayoutSoon(tooltip)
 end
 
 -- ============================================================================
