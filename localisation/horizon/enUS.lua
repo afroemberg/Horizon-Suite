@@ -1956,12 +1956,12 @@ L["TALKING_HEAD_NAME_OUTLINE"]                                = "Name Outline"
 L["TALKING_HEAD_NAME_OUTLINE_DESC"]                           = "Apply text outline to the NPC name."
 L["TALKING_HEAD_NAME_COLOUR"]                                 = "Name Colour"
 L["TALKING_HEAD_NAME_COLOUR_DESC"]                            = "Colour of the NPC name text."
-L["TALKING_HEAD_DIALOGUE_FONT"]                                   = "Dialogue Font"
-L["TALKING_HEAD_DIALOGUE_FONT_DESC"]                              = "Font family for NPC dialogue text."
-L["TALKING_HEAD_DIALOGUE_SIZE"]                                   = "Dialogue Font Size"
-L["TALKING_HEAD_DIALOGUE_SIZE_DESC"]                              = "Font size for NPC dialogue text (10–20)."
-L["TALKING_HEAD_DIALOGUE_OUTLINE"]                                = "Dialogue Outline"
-L["TALKING_HEAD_DIALOGUE_OUTLINE_DESC"]                           = "Apply text outline to the NPC dialogue text."
+L["TALKING_HEAD_DIALOGUE_FONT"]                               = "Dialogue Font"
+L["TALKING_HEAD_DIALOGUE_FONT_DESC"]                          = "Font family for NPC dialogue text."
+L["TALKING_HEAD_DIALOGUE_SIZE"]                               = "Dialogue Font Size"
+L["TALKING_HEAD_DIALOGUE_SIZE_DESC"]                          = "Font size for NPC dialogue text (10–20)."
+L["TALKING_HEAD_DIALOGUE_OUTLINE"]                            = "Dialogue Outline"
+L["TALKING_HEAD_DIALOGUE_OUTLINE_DESC"]                       = "Apply text outline to the NPC dialogue text."
 L["TALKING_HEAD_PREVIEW"]                                     = "Preview"
 L["TALKING_HEAD_PREVIEW_NPC_NAME"]                            = "Thrall"
 L["TALKING_HEAD_PREVIEW_DIALOGUE"]                            = "I'm just a floating head. Surprising, I know — but Azeroth has seen weirder."
@@ -2003,6 +2003,8 @@ L["ZONE_LABELS"]                                              = "Zone Labels"
 L["ZONE_NAME_NEW_ZONE"]                                       = "Zone name still appears when entering a new zone."
 L["ZONE_TYPE_COLOURING"]                                      = "Zone Type Colouring"
 L["FOCUS_COMPLETED_CHECKMARK"]                                = "|TInterface\\\\Buttons\\\\UI-CheckBox-Check:12:12:0:0|t instead of green for done objectives."
+
+
 
 
 
