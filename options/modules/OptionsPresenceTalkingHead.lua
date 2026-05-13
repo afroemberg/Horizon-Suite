@@ -25,49 +25,49 @@ local FONT_USE_GLOBAL = "__global__"
 local function GetFontOptions(dbKey)
     if addon.RefreshFontList then addon.RefreshFontList() end
     local list = (addon.GetFontList and addon.GetFontList()) or {}
-    local out = { { L["FOCUS_GLOBAL_FONT"] or "Use global font", FONT_USE_GLOBAL } }
+    local out = { { L["FOCUS_GLOBAL_FONT"], FONT_USE_GLOBAL } }
     for i = 1, #list do out[#out + 1] = list[i] end
     local saved = getDB(dbKey, FONT_USE_GLOBAL)
     if saved == FONT_USE_GLOBAL then return out end
     for _, o in ipairs(out) do
         if o[2] == saved then return out end
     end
-    out[#out + 1] = { L["FOCUS_CUSTOM"] or "Custom", saved }
+    out[#out + 1] = { L["FOCUS_CUSTOM"], saved }
     return out
 end
 
 local function DisplayFont(v)
-    if v == FONT_USE_GLOBAL then return L["FOCUS_GLOBAL_FONT"] or "Use global font" end
+    if v == FONT_USE_GLOBAL then return L["FOCUS_GLOBAL_FONT"] end
     return addon.GetFontNameForPath and addon.GetFontNameForPath(v) or v
 end
 
 local category = {
     key       = "PresenceTalkingHead",
-    name      = L["TALKING_HEAD"] or "Talking Head",
-    desc      = L["TALKING_HEAD_CATEGORY_DESC"] or "Configure the appearance and behavior of the Talking Head.",
+    name      = L["TALKING_HEAD"],
+    desc      = L["TALKING_HEAD_CATEGORY_DESC"],
     moduleKey = "presence",
     options   = {
-        { type = "section", name = L["AXIS_GENERAL"] or "General" },
+        { type = "section", name = L["AXIS_GENERAL"] },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_ENABLE"] or "Enable Talking Head",
-            desc  = L["TALKING_HEAD_ENABLE_DESC"] or "Show the Talking Head frame during NPC dialogue.",
+            name  = L["TALKING_HEAD_ENABLE"],
+            desc  = L["TALKING_HEAD_ENABLE_DESC"],
             dbKey = "talkingHeadEnabled",
             get   = function() return getDB("talkingHeadEnabled", D.talkingHeadEnabled) end,
             set   = function(value) setDB("talkingHeadEnabled", value); updateTalkingHead() end,
         },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_MUTE_VOICE"] or "Mute Voice",
-            desc  = L["TALKING_HEAD_MUTE_VOICE_DESC"] or "Silence the NPC voice-over when a Talking Head appears.",
+            name  = L["TALKING_HEAD_MUTE_VOICE"],
+            desc  = L["TALKING_HEAD_MUTE_VOICE_DESC"],
             dbKey = "talkingHeadMuteVoice",
             get   = function() return getDB("talkingHeadMuteVoice", D.talkingHeadMuteVoice) end,
             set   = function(value) setDB("talkingHeadMuteVoice", value) end,
         },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_CUSTOMISE"] or "Customise Appearance",
-            desc  = L["TALKING_HEAD_CUSTOMISE_DESC"] or "Override fonts, colours, portrait visibility, and frame scale.",
+            name  = L["TALKING_HEAD_CUSTOMISE"],
+            desc  = L["TALKING_HEAD_CUSTOMISE_DESC"],
             dbKey = "talkingHeadCustomise",
             get   = function() return getDB("talkingHeadCustomise", D.talkingHeadCustomise) end,
             set   = function(v) setDB("talkingHeadCustomise", v); updateTalkingHead() end,
@@ -78,11 +78,11 @@ local category = {
                 "talkingHeadContentSection", "talkingHeadFrameSection", "talkingHeadPreviewSection", "talkingHeadPreview",
             },
         },
-        { type = "section", name = L["TALKING_HEAD_FRAME_CONTENT"] or "Content", dbKey = "talkingHeadContentSection", visibleWhen = isCustomising },
+        { type = "section", name = L["TALKING_HEAD_FRAME_CONTENT"], dbKey = "talkingHeadContentSection", visibleWhen = isCustomising },
         {
             type              = "dropdown",
-            name              = L["TALKING_HEAD_NAME_FONT"] or "Name Font",
-            desc              = L["TALKING_HEAD_NAME_FONT_DESC"] or "Font family for the NPC name.",
+            name              = L["TALKING_HEAD_NAME_FONT"],
+            desc              = L["TALKING_HEAD_NAME_FONT_DESC"],
             dbKey             = "talkingHeadNameFontPath",
             searchable        = true,
             options           = function() return GetFontOptions("talkingHeadNameFontPath") end,
@@ -95,8 +95,8 @@ local category = {
         },
         {
             type  = "slider",
-            name  = L["TALKING_HEAD_NAME_SIZE"] or "Name Font Size",
-            desc  = L["TALKING_HEAD_NAME_SIZE_DESC"] or "Font size for the NPC name (10–24).",
+            name  = L["TALKING_HEAD_NAME_SIZE"],
+            desc  = L["TALKING_HEAD_NAME_SIZE_DESC"],
             dbKey = "talkingHeadNameSize",
             min   = 10,
             max   = 24,
@@ -107,8 +107,8 @@ local category = {
         },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_NAME_OUTLINE"] or "Name Outline",
-            desc  = L["TALKING_HEAD_NAME_OUTLINE_DESC"] or "Apply text outline to the NPC name.",
+            name  = L["TALKING_HEAD_NAME_OUTLINE"],
+            desc  = L["TALKING_HEAD_NAME_OUTLINE_DESC"],
             dbKey = "talkingHeadNameOutline",
             get        = function() return getDB("talkingHeadNameOutline", D.talkingHeadNameOutline) end,
             set        = function(v) setDB("talkingHeadNameOutline", v); updateTalkingHead() end,
@@ -117,8 +117,8 @@ local category = {
         },
         {
             type    = "color",
-            name    = L["TALKING_HEAD_NAME_COLOUR"] or "Name Colour",
-            desc    = L["TALKING_HEAD_NAME_COLOUR_DESC"] or "Colour of the NPC name text.",
+            name    = L["TALKING_HEAD_NAME_COLOUR"],
+            desc    = L["TALKING_HEAD_NAME_COLOUR_DESC"],
             dbKey   = "talkingHeadNameColor",
             default = { D.talkingHeadNameColorR, D.talkingHeadNameColorG, D.talkingHeadNameColorB },
             get        = function() return getDB("talkingHeadNameColorR", D.talkingHeadNameColorR), getDB("talkingHeadNameColorG", D.talkingHeadNameColorG), getDB("talkingHeadNameColorB", D.talkingHeadNameColorB) end,
@@ -128,8 +128,8 @@ local category = {
         },
         {
             type              = "dropdown",
-            name              = L["TALKING_HEAD_TEXT_FONT"] or "Text Font",
-            desc              = L["TALKING_HEAD_TEXT_FONT_DESC"] or "Font family for NPC dialogue text.",
+            name              = L["TALKING_HEAD_DIALOGUE_FONT"],
+            desc              = L["TALKING_HEAD_DIALOGUE_FONT_DESC"],
             dbKey             = "talkingHeadTextFontPath",
             searchable        = true,
             options           = function() return GetFontOptions("talkingHeadTextFontPath") end,
@@ -142,8 +142,8 @@ local category = {
         },
         {
             type  = "slider",
-            name  = L["TALKING_HEAD_TEXT_SIZE"] or "Text Font Size",
-            desc  = L["TALKING_HEAD_TEXT_SIZE_DESC"] or "Font size for NPC dialogue text (10–20).",
+            name  = L["TALKING_HEAD_DIALOGUE_SIZE"],
+            desc  = L["TALKING_HEAD_DIALOGUE_SIZE_DESC"],
             dbKey = "talkingHeadTextSize",
             min   = 10,
             max   = 20,
@@ -154,8 +154,8 @@ local category = {
         },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_TEXT_OUTLINE"] or "Text Outline",
-            desc  = L["TALKING_HEAD_TEXT_OUTLINE_DESC"] or "Apply text outline to the NPC dialogue text.",
+            name  = L["TALKING_HEAD_DIALOGUE_OUTLINE"],
+            desc  = L["TALKING_HEAD_DIALOGUE_OUTLINE_DESC"],
             dbKey = "talkingHeadTextOutline",
             get        = function() return getDB("talkingHeadTextOutline", D.talkingHeadTextOutline) end,
             set        = function(v) setDB("talkingHeadTextOutline", v); updateTalkingHead() end,
@@ -164,8 +164,8 @@ local category = {
         },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_SHOW_PORTRAIT"] or "Show NPC Portrait",
-            desc  = L["TALKING_HEAD_SHOW_PORTRAIT_DESC"] or "Show the NPC 3D model in the frame.",
+            name  = L["TALKING_HEAD_SHOW_PORTRAIT"],
+            desc  = L["TALKING_HEAD_SHOW_PORTRAIT_DESC"],
             dbKey = "talkingHeadShowPortrait",
             get        = function() return getDB("talkingHeadShowPortrait", D.talkingHeadShowPortrait) end,
             set        = function(value) setDB("talkingHeadShowPortrait", value); updateTalkingHead() end,
@@ -174,19 +174,19 @@ local category = {
         },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_SHOW_PORTRAIT_BORDER"] or "Show Portrait Border",
-            desc  = L["TALKING_HEAD_SHOW_PORTRAIT_BORDER_DESC"] or "Show the decorative ring around the NPC portrait. Has no effect when the portrait is hidden.",
+            name  = L["TALKING_HEAD_SHOW_PORTRAIT_BORDER"],
+            desc  = L["TALKING_HEAD_SHOW_PORTRAIT_BORDER_DESC"],
             dbKey = "talkingHeadShowPortraitBorder",
             get        = function() return getDB("talkingHeadShowPortraitBorder", D.talkingHeadShowPortraitBorder) end,
             set        = function(value) setDB("talkingHeadShowPortraitBorder", value); updateTalkingHead() end,
             refreshIds = { "talkingHeadPreview" },
             visibleWhen = function() return isCustomising() and getDB("talkingHeadShowPortrait", D.talkingHeadShowPortrait) end,
         },
-        { type = "section", name = L["TALKING_HEAD_FRAME"] or "Frame", dbKey = "talkingHeadFrameSection", visibleWhen = isCustomising },
+        { type = "section", name = L["TALKING_HEAD_FRAME"], dbKey = "talkingHeadFrameSection", visibleWhen = isCustomising },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_SHOW_BG"] or "Show Background",
-            desc  = L["TALKING_HEAD_SHOW_BG_DESC"] or "Show the cinematic background art behind the portrait.",
+            name  = L["TALKING_HEAD_SHOW_BG"],
+            desc  = L["TALKING_HEAD_SHOW_BG_DESC"],
             dbKey = "talkingHeadBackground",
             get   = function() return getDB("talkingHeadBackground", D.talkingHeadBackground) end,
             set   = function(value) setDB("talkingHeadBackground", value); updateTalkingHead() end,
@@ -194,8 +194,8 @@ local category = {
         },
         {
             type  = "toggle",
-            name  = L["TALKING_HEAD_SHOW_CLOSE"] or "Show Close Button",
-            desc  = L["TALKING_HEAD_SHOW_CLOSE_DESC"] or "Show a close button to dismiss the Talking Head early.",
+            name  = L["TALKING_HEAD_SHOW_CLOSE"],
+            desc  = L["TALKING_HEAD_SHOW_CLOSE_DESC"],
             dbKey = "talkingHeadCloseButton",
             get   = function() return getDB("talkingHeadCloseButton", D.talkingHeadCloseButton) end,
             set   = function(value) setDB("talkingHeadCloseButton", value); updateTalkingHead() end,
@@ -203,8 +203,8 @@ local category = {
         },
         {
             type  = "slider",
-            name  = L["TALKING_HEAD_SCALE"] or "Frame Scale",
-            desc  = L["TALKING_HEAD_SCALE_DESC"] or "Scale of the entire Talking Head frame (0.5–2.0).",
+            name  = L["TALKING_HEAD_SCALE"],
+            desc  = L["TALKING_HEAD_SCALE_DESC"],
             dbKey = "talkingHeadScale",
             min   = 0.5,
             max   = 2.0,
@@ -213,7 +213,7 @@ local category = {
             set         = function(v) setDB("talkingHeadScale", math.max(0.5, math.min(2.0, v))); updateTalkingHead() end,
             visibleWhen = isCustomising,
         },
-        { type = "section", name = L["TALKING_HEAD_CONTENT_PREVIEW"] or "Content Preview", dbKey = "talkingHeadPreviewSection", visibleWhen = isCustomising },
+        { type = "section", name = L["TALKING_HEAD_CONTENT_PREVIEW"], dbKey = "talkingHeadPreviewSection", visibleWhen = isCustomising },
         { type = "talkingHeadPreview", visibleWhen = isCustomising },
     },
 }
