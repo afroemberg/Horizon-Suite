@@ -23,7 +23,7 @@ addon.StandardFont = UNIT_NAME_FONT
 -- L["NAME_DISCORD"]                                          = "Discord"
 -- L["NAME_KO_FI"]                                            = "Ko-fi"
 -- L["NAME_PATREON"]                                          = "Patreon"
-L["NAME_GITHUB"]                                              = "GitLab"
+-- L["NAME_GITHUB"]                                           = "GitHub"
 -- L["NAME_CURSEFORGE"]                                       = "CurseForge"
 -- L["NAME_WAGO"]                                             = "Wago"
 -- L["NAME_TOMTOM"]                                           = "TomTom"
@@ -201,7 +201,7 @@ L["DASH_WELCOME_CONTRIBUTORS_BODY"]                           = [=[Thanks to eve
 -- L["DASH_WELCOME_SUPPORTERS_HEADING"]                       = "Supporters"
 -- L["DASH_WELCOME_SUPPORTERS_BODY"]                          = [=[Thank you to everyone who supports Horizon Suite through Ko-fi, Patreon, and other channels.]=]
 -- L["DASH_WELCOME_LOCALISATIONS_HEADING"]                    = "Localisations"
-L["DASH_WELCOME_LOCALISATIONS_BODY"]                          = [=[The addon UI is localised for:
+-- L["DASH_WELCOME_LOCALISATIONS_BODY"]                       = [=[The addon UI is localised for:
 -- 
 -- • German (deDE) — `localisation/horizon/deDE.lua`
 -- • English (enUS) — `localisation/horizon/enUS.lua`
@@ -440,9 +440,9 @@ L["AXIS_RESET_FIXED_POSITION_DEFAULT"]                        = "Restablecer pos
 -- L["INSIGHT_FOCUS_DYNAMIC_IN_FIXED"]                        = "Dynamic Position for Focus Tooltips"
 -- L["INSIGHT_FOCUS_DYNAMIC_IN_FIXED_DESC"]                   = "When fixed anchor is on, Focus tracker tooltips still attach to the outer edge of the Horizon panel so they never cover the tracker."
 -- L["INSIGHT_CURSOR_OFFSET_X"]                               = "Cursor Offset X"
-L["INSIGHT_CURSOR_OFFSET_X_DESC"]                             = "Horizontal pixel offset from the default cursor tooltip position (cursor anchor only)."
+-- L["INSIGHT_CURSOR_OFFSET_X_DESC"]                             = "Horizontal pixel offset from the default cursor tooltip position (cursor anchor only)."
 -- L["INSIGHT_CURSOR_OFFSET_Y"]                               = "Cursor Offset Y"
-L["INSIGHT_CURSOR_OFFSET_Y_DESC"]                             = "Vertical pixel offset from the default cursor tooltip position (cursor anchor only)."
+-- L["INSIGHT_CURSOR_OFFSET_Y_DESC"]                             = "Vertical pixel offset from the default cursor tooltip position (cursor anchor only)."
 L["AXIS_TOOLTIP_BACKGROUND_COLOUR"]                           = "Colour de fondo de descripciones"
 L["AXIS_COLOUR_OF_TOOLTIP_BACKGROUND"]                        = "Colour de fondo de las descripciones."
 L["AXIS_TOOLTIP_BACKGROUND_OPACITY"]                          = "Opacidad del fondo de descripciones"
@@ -454,7 +454,7 @@ L["AXIS_FONT_FAMILY_TOOLTIP_TEXT"]                            = "Familia de fuen
 -- L["INSIGHT_BADGES_SIZE"]                                   = "Badges Size"
 -- L["INSIGHT_BADGES_FONT_SIZE"]                              = "Status Badges Font Size."
 -- L["INSIGHT_STATS_SIZE"]                                    = "Stats Size"
-L["INSIGHT_STATS_FONT_SIZE"]                                  = "M+ score, item level, and honor level font size."
+-- L["INSIGHT_STATS_FONT_SIZE"]                                  = "M+ score, item level, and honor level font size."
 -- L["INSIGHT_MOUNT_SIZE"]                                    = "Mount Size"
 -- L["INSIGHT_MOUNT_FONT_SIZE"]                               = "Mount name, source, and ownership font size."
 -- L["INSIGHT_MOUNT_OWNERSHIP_DISPLAY"]                       = "Mount Collection Indicator"
@@ -467,11 +467,11 @@ L["INSIGHT_STATS_FONT_SIZE"]                                  = "M+ score, item 
 -- L["INSIGHT_TRANSMOG_FONT_SIZE"]                            = "Item appearance status font size."
 -- L["AXIS_TOOLTIPS"]                                         = "Tooltips"
 -- L["INSIGHT_CATEGORY_GLOBAL"]                               = "Global Tooltips"
-L["INSIGHT_CATEGORY_GLOBAL_DESC"]                             = "Anchor, backdrop, fonts, sizes, and display options shared across tooltip types."
+-- L["INSIGHT_CATEGORY_GLOBAL_DESC"]                             = "Anchor, backdrop, fonts, sizes, and display options shared across tooltip types."
 -- L["INSIGHT_CATEGORY_PLAYER"]                               = "Player Characters"
-L["INSIGHT_CATEGORY_PLAYER_DESC"]                             = "Guild rank, titles, badges, PvP, ratings, gear, and mount lines on player tooltips."
+-- L["INSIGHT_CATEGORY_PLAYER_DESC"]                             = "Guild rank, titles, badges, PvP, ratings, gear, and mount lines on player tooltips."
 -- L["INSIGHT_CATEGORY_NPC"]                                  = "NPCs"
-L["INSIGHT_CATEGORY_NPC_DESC"]                                = "NPC tooltip styling. Extra NPC-only toggles can be added here later."
+-- L["INSIGHT_CATEGORY_NPC_DESC"]                                = "NPC tooltip styling. Extra NPC-only toggles can be added here later."
 -- L["INSIGHT_CATEGORY_ITEM"]                                 = "Items"
 -- L["INSIGHT_CATEGORY_ITEM_DESC"]                            = "Item tooltip options such as transmog collection status."
 -- L["INSIGHT_SECTION_IDENTITY"]                              = "Identity"
@@ -488,7 +488,7 @@ L["INSIGHT_CATEGORY_NPC_DESC"]                                = "NPC tooltip sty
 -- L["INSIGHT_SECTION_MOUNT"]                                 = "Mount"
 -- L["INSIGHT_SECTION_DISMISS"]                               = "Unit Tooltip Dismiss"
 -- L["INSIGHT_DISMISS_GRACE"]                                 = "Dismiss Grace"
-L["INSIGHT_DISMISS_GRACE_DESC"]                               = "How long to wait after the mouse leaves a unit before starting to hide the GameTooltip. Longer grace reduces flicker from brief cursor gaps."
+-- L["INSIGHT_DISMISS_GRACE_DESC"]                               = "How long to wait after the mouse leaves a unit before starting to hide the GameTooltip. Longer grace reduces flicker from brief cursor gaps."
 -- L["INSIGHT_DISMISS_GRACE_INSTANT"]                         = "Instant"
 -- L["INSIGHT_DISMISS_GRACE_DEFAULT"]                         = "Normal"
 -- L["INSIGHT_DISMISS_GRACE_RELAXED"]                         = "Relaxed"
@@ -496,7 +496,7 @@ L["INSIGHT_DISMISS_GRACE_DESC"]                               = "How long to wai
 -- L["INSIGHT_HIDE_IN_COMBAT"]                                = "Hide Tooltips in Combat"
 -- L["INSIGHT_HIDE_IN_COMBAT_DESC"]                           = "While in combat, close GameTooltip and other Insight-styled tooltip frames and block them from staying open. Applies only when the Insight module is enabled."
 -- L["INSIGHT_FADE_OUT_SEC"]                                  = "Fade-Out Duration"
-L["INSIGHT_FADE_OUT_SEC_DESC"]                                = "Seconds to fade the unit tooltip after dismiss starts. Zero hides immediately (no fade). Applies to GameTooltip unit tips only."
+-- L["INSIGHT_FADE_OUT_SEC_DESC"]                                = "Seconds to fade the unit tooltip after dismiss starts. Zero hides immediately (no fade). Applies to GameTooltip unit tips only."
 -- L["INSIGHT_SECTION_ICONS_AND_SEPARATORS"]                  = "Icons & Separators"
 -- L["INSIGHT_SECTION_NPC_TOOLTIP"]                           = "NPC Tooltip"
 -- L["INSIGHT_SECTION_TRANSMOG"]                              = "Transmog"
@@ -525,8 +525,8 @@ L["INSIGHT_FADE_OUT_SEC_DESC"]                                = "Seconds to fade
 -- L["AXIS_PLAYER_S_CURRENT_SEASON_MYTHIC_SCORE"]             = "Show the player's current season Mythic+ score, colour-coded by tier."
 -- L["AXIS_ITEM_LEVEL"]                                       = "Show item level"
 -- L["AXIS_PLAYER_S_EQUIPPED_ITEM_LEVEL_AFTER"]               = "Show the player's equipped item level after inspecting them."
-L["AXIS_HONOR_LEVEL"]                                         = "Show honor level"
-L["AXIS_PLAYER_S_PVP_HONOR_LEVEL_TOOLTIP"]                    = "Show the player's PvP honor level in the tooltip."
+-- L["AXIS_HONOR_LEVEL"]                                         = "Show honor level"
+-- L["AXIS_PLAYER_S_PVP_HONOR_LEVEL_TOOLTIP"]                    = "Show the player's PvP honor level in the tooltip."
 -- L["AXIS_PVP_TITLE"]                                        = "Show PvP title"
 -- L["AXIS_PLAYER_S_PVP_TITLE_E_G"]                           = "Show the player's PvP title (e.g. Gladiator) in the tooltip."
 -- L["AXIS_CHARACTER_TITLE"]                                  = "Character Title"
@@ -546,9 +546,9 @@ L["AXIS_PLAYER_S_PVP_HONOR_LEVEL_TOOLTIP"]                    = "Show the player
 -- L["AXIS_A_BLANK_LINE_INSTEAD_OF_DASHES"]                   = "Use a blank line instead of dashes between tooltip sections."
 -- L["AXIS_ICONS"]                                            = "Show Icons"
 -- L["AXIS_CLASS_ICON_STYLE"]                                 = "Class Icon Style"
-L["AXIS_DEFAULT_BLIZZARD_RONDOMEDIA_CLASS_ICONS_TH"]          = "Use Default (Blizzard) or RondoMedia class icons on the class/spec line."
-L["AXIS_CUSTOM_CLASS_ICONS_LABEL"]                            = "Custom (addon media)"
-L["AXIS_CLASS_ICON_SOURCES_TOOLTIP"]                          = "RondoMedia: https://www.curseforge.com/wow/addons/rondomedia — Custom: place one .tga per class under media/CustomClassIcons/<CLASS>/<class lower>.tga (e.g. WARRIOR/warrior.tga), then /reload."
+-- L["AXIS_DEFAULT_BLIZZARD_RONDOMEDIA_CLASS_ICONS_TH"]          = "Use Default (Blizzard) or RondoMedia class icons on the class/spec line."
+-- L["AXIS_CUSTOM_CLASS_ICONS_LABEL"]                            = "Custom (addon media)"
+-- L["AXIS_CLASS_ICON_SOURCES_TOOLTIP"]                          = "RondoMedia: https://www.curseforge.com/wow/addons/rondomedia — Custom: place one .tga per class under media/CustomClassIcons/<CLASS>/<class lower>.tga (e.g. WARRIOR/warrior.tga), then /reload."
 -- L["AXIS_RONDOMEDIA_CLASS_ICONS_RONDOFERRARI_HTTPS_WWW"]    = "RondoMedia class icons by RondoFerrari — https://www.curseforge.com/wow/addons/rondomedia"
 -- L["AXIS_DEFAULT"]                                          = "Default"
 -- L["AXIS_FACTION_SPEC_MOUNT_MYTHIC_ICONS_TOOLTIPS"]         = "Show faction, spec, mount, and Mythic+ icons in tooltips."
@@ -628,7 +628,7 @@ L["FOCUS_HEADER_DIVIDER_COLOUR"]                              = "Colour del divi
 L["FOCUS_COLOUR_OF_LINE_BELOW_HEADER"]                        = "Colour de la línea debajo del encabezado."
 L["FOCUS_SUPER_MINIMAL_MODE"]                                 = "Modo super minimalista"
 L["FOCUS_HIDE_HEADER_A_PURE_TEXT_LIST"]                       = "Oculta el encabezado para una lista de solo texto."
-L["FOCUS_OPTIONS_BUTTON"]                                     = "Options button"
+-- L["FOCUS_OPTIONS_BUTTON"]                                     = "Options button"
 L["FOCUS_OPTIONS_BUTTON_TRACKER_HEADER"]                      = "Muestra el botón de opciones en el encabezado del rastreador."
 L["FOCUS_HEADER_COLOUR"]                                      = "Colour del encabezado"
 L["FOCUS_COLOUR_OF_OBJECTIVES_HEADER_TEXT"]                   = "Colour del texto del encabezado OBJETIVOS."
@@ -655,7 +655,7 @@ L["FOCUS_USABLE_QUEST_ITEM_BUTTON_NEXT_QUEST"]                = "Muestra el bot�
 -- L["FOCUS_WOWHEAD_LINK_TOOLTIPS"]                           = "Show WoWhead Link in Tooltips"
 -- L["FOCUS_A_TOOLTIP_SHOWN_ADD_A_LINK"]                      = "When a tooltip is shown, add a link to open the quest, achievement, or NPC on WoWhead."
 -- L["FOCUS_VIEW_WOWHEAD"]                                    = "View on WoWhead"
-L["FOCUS_WOWHEAD_ALT_CLICK_HINT"]                             = "Alt+click row to copy"
+-- L["FOCUS_WOWHEAD_ALT_CLICK_HINT"]                             = "Alt+click row to copy"
 -- L["FOCUS_WOWHEAD_HINT_LIST_SEPARATOR"]                     = " · "
 -- L["FOCUS_WOWHEAD_TOOLTIP_HINT_FALLBACK"]                   = "Configure in Focus options"
 -- L["FOCUS_COPY_LINK"]                                       = "Copy link"
@@ -663,7 +663,7 @@ L["FOCUS_WOWHEAD_ALT_CLICK_HINT"]                             = "Alt+click row t
 L["FOCUS_OBJECTIVE_NUMBERS"]                                  = "Mostrar números de objetivos"
 -- L["FOCUS_OBJECTIVE_PREFIX"]                                = "Objective Prefix"
 -- L["FOCUS_OBJECTIVE_PROGRESS_NUMBER_COLOURS"]               = "Colour Objective Progress Numbers"
-L["FOCUS_OBJECTIVE_PROGRESS_NUMBER_COLOURS_DESC"]             = "Tint X/Y counts: normal colour at 0/n, gold while in progress, green when complete. The slash uses the usual objective colour."
+-- L["FOCUS_OBJECTIVE_PROGRESS_NUMBER_COLOURS_DESC"]             = "Tint X/Y counts: normal colour at 0/n, gold while in progress, green when complete. The slash uses the usual objective colour."
 -- L["FOCUS_PREFIX_OBJECTIVE_A_NUMBER_HYPHEN"]                = "Prefix each objective with a number or hyphen."
 -- L["FOCUS_NUMBERS"]                                         = "Numbers (1. 2. 3.)"
 -- L["FOCUS_HYPHENS"]                                         = "Hyphens (-)"
@@ -1613,7 +1613,7 @@ L["VISTA_MOUSEOVER_BAR"]                                      = "Barra al pasar 
 L["VISTA_RIGHT_CLICK_PANEL"]                                  = "Panel clic derecho"
 L["VISTA_FLOATING_DRAWER"]                                    = "Cajón flotante"
 -- L["VISTA_DRAWER_BUTTON_ICON"]                              = "Drawer Button Icon"
-L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
+-- L["VISTA_DRAWER_BUTTON_ICON_DESC"]                            = "Enter a Blizzard icon file ID or texture path. Leave blank to use the default drawer icon."
 -- L["VISTA_CHOOSE_ICON"]                                     = "Choose icon"
 -- L["VISTA_CHOOSE_DRAWER_ICON"]                              = "Choose Drawer Icon"
 L["VISTA_LOCK_DRAWER_BUTTON_POSITION"]                        = "Bloquear posición del botón del cajón"
@@ -1961,164 +1961,3 @@ L["M_BLOCK_WHENEVER_AN_ACTIVE_KEYSTONE"]                      = "Show the M+ blo
 -- L["ZONE_NAME_NEW_ZONE"]                                    = "Zone name still appears when entering a new zone."
 -- L["ZONE_TYPE_COLOURING"]                                   = "Zone Type Colouring"
 -- L["FOCUS_COMPLETED_CHECKMARK"]                             = "|TInterface\\\\Buttons\\\\UI-CheckBox-Check:12:12:0:0|t instead of green for done objectives."
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
