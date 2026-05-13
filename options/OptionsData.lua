@@ -3544,6 +3544,10 @@ end
 -- Export for panel
 addon.OptionsData_GetDB = OptionsData_GetDB
 addon.OptionsData_SetDB = OptionsData_SetDB
+addon.OptionsData_GetFontList = function()
+    if addon.RefreshFontList then addon.RefreshFontList() end
+    return (addon.GetFontList and addon.GetFontList()) or {}
+end
 addon.OptionsData_NotifyMainAddon = OptionsData_NotifyMainAddon
 addon.OptionsData_SetUpdateFontsRef = OptionsData_SetUpdateFontsRef
 addon.GetPresencePreviewDropdownOptions = GetPresencePreviewDropdownOptions
